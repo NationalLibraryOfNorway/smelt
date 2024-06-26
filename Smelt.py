@@ -384,7 +384,26 @@ class Smelt(QWidget):
             QMessageBox.warning(self, 'Error', 'Unsupported file type selected.')
             return None
 
+    def check_path_validity(self):
+        mappe_input_text = self.mappe_input_field.text().strip()
+        fil_input_text = self.fil_input_field.text().strip()
+
+        # Check if mappe_input_text is a valid directory or file path
+        if os.path.isdir(mappe_input_text):
+            self.folder_path = mappe_input_text
+        elif os.path.isfile(mappe_input_text):
+            self.folder_path = os.path.dirname(mappe_input_text)
+            self.film_file_path = mappe_input_text
+
+        # Check if fil_input_text is a valid file path
+        if os.path.isfile(fil_input_text):
+            self.audio_file_path = fil_input_text
+        elif fil_input_text == '':
+            self.audio_file_path = ''
+            self.inkluderLydCheckBox.setChecked(False)
+
     def run_smelt(self):
+        self.check_path_validity()
         self.lock_down(True)
         self.output_text.setHidden(False)
 
@@ -561,10 +580,20 @@ class Smelt(QWidget):
         ]
     
     def construct_mxf_mov_commands(self):
-        self.ffmpeg_dcp_cmd = [
+        ffmpeg_base = [
             'ffmpeg',
             '-i', self.video,
-            '-i', self.audio_file if self.inkluderLydCheckBox.isChecked() else '',
+        ]
+        if self.inkluderLydCheckBox.isChecked and self.audio_file:
+            ffmpeg_audio = ['-i', self.audio_file,]
+            ffmpeg_audio_param = [
+                '-c:a', 'aac',
+                '-b:a', '224k',
+            ]
+        else:
+            ffmpeg_audio = []
+            ffmpeg_audio_param = []
+        self.ffmpeg_dcp_cmd = ffmpeg_base + ffmpeg_audio + [
             '-c:v', 'libx264',
             '-pix_fmt', 'yuv422p10le',
             '-preset', 'slow',
@@ -574,35 +603,28 @@ class Smelt(QWidget):
             self.lossless_mov,
             self.proceed_lossless
         ]
-        self.ffmpeg_dcp_h264_cmd = [
-            'ffmpeg',
-            '-i', self.video,
-            '-i', self.audio_file if self.inkluderLydCheckBox.isChecked() else '',
+        self.ffmpeg_dcp_h264_cmd = ffmpeg_base + ffmpeg_audio + [
             '-c:v', 'libx264',
             '-pix_fmt', 'yuv420p',
             '-preset', 'slow',
             '-crf', '21',
             '-ac', '2',
+        ] + ffmpeg_audio_param + [
             '-v', 'info',
             self.h264_mp4,
             self.proceed_h264
         ]
-        self.ffmpeg_h264_from_prores_cmd = [
-            'ffmpeg',
-            '-i', self.video,
-            '-i', self.audio_file if self.audio_file else '',
+        self.ffmpeg_h264_from_prores_cmd = ffmpeg_base + ffmpeg_audio + [
             '-c:v', 'libx264',
             '-vf', 'scale=-2:1080',
             '-pix_fmt', 'yuv420p',
             '-preset', 'slow',
             '-crf', '23',
-            '-c:a', 'aac' if self.audio_file else '',
-            '-b:a', '224k' if self.audio_file else '',
             '-v', 'info',
             self.h264_mp4,
             self.proceed_h264
         ]
-    
+
     def construct_audio_commands(self):
         self.ffmpeg_audio_cmd = [
             'ffmpeg',
