@@ -3,13 +3,20 @@ import re
 import subprocess
 import sys
 import os
-from PyQt5 import QtGui
-from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
-from PyQt5.QtCore import *
 
 
 def create_file_selection_box(text, buttons):
+    """
+    Create a file selection message box with multiple buttons.
+
+    Args:
+        text (str): The message to display.
+        buttons (list): A list of buttons to include in the message box.
+
+    Returns:
+        QMessageBox: The created message box.
+    """
     msg = QMessageBox()
     msg.setIcon(QMessageBox.Question)
     msg.setWindowTitle("Flere filtyper funnet")
@@ -21,6 +28,16 @@ def create_file_selection_box(text, buttons):
 
 
 def select_file_from_list(files, file_type_description):
+    """
+    Open a file selection dialog to select a file from a list.
+
+    Args:
+        files (list): A list of file paths to select from.
+        file_type_description (str): A description of the file type.
+
+    Returns:
+        str: The selected file path, or None if no file was selected.
+    """
     dialog = QFileDialog()
     dialog.setFileMode(QFileDialog.ExistingFile)
     dialog.setNameFilter(f"{file_type_description} Files (*.{file_type_description})")
@@ -34,15 +51,29 @@ def select_file_from_list(files, file_type_description):
 
 
 def extract_number(filename):
+    """
+    Extract the first number found in a filename.
+
+    Args:
+        filename (str): The filename to extract the number from.
+
+    Returns:
+        int: The extracted number, or float('inf') if no number was found.
+    """
     base = os.path.basename(filename)
     match = re.search(r'(\d+)', base)
     return int(match.group(1)) if match else float('inf')
 
 
 class Smelt(QWidget):
+    """
+    Smelt GUI application for video and audio processing.
+    """
+
     def __init__(self):
         super().__init__()
 
+        # Initialize paths and filenames
         self.images_path = None
         self.proceed_prores = None
         self.proceed_lossless = None
@@ -59,6 +90,7 @@ class Smelt(QWidget):
         self.folder_path = None
         self.film_file_path = None
 
+        # Initialize UI elements
         self.filLabel = None
         self.mappeLabel = None
         self.fpsLabel = None
@@ -80,6 +112,9 @@ class Smelt(QWidget):
         self.initUI()
 
     def initUI(self):
+        """
+        Initialize the user interface.
+        """
         self.create_labels()
         self.create_checkboxes()
         self.create_buttons()
@@ -92,39 +127,60 @@ class Smelt(QWidget):
         self.set_styling()
 
     def create_labels(self):
+        """
+        Create labels for the UI.
+        """
         self.filLabel = QLabel('Lydfil:', self)
         self.mappeLabel = QLabel('Mappe/fil:', self)
         self.fpsLabel = QLabel('FPS:', self)
 
     def create_checkboxes(self):
+        """
+        Create checkboxes for the UI.
+        """
         self.inkluderLydCheckBox = QCheckBox('Lyd', self)
         self.inkluderProresCheckBox = QCheckBox('Prores 422 HQ', self)
         self.kunLydCheckBox = QCheckBox('Kun lydfil', self)
         self.mezzaninfilCheckBox = QCheckBox('Mezzaninfil', self)
 
     def create_buttons(self):
+        """
+        Create buttons for the UI.
+        """
         self.mappeButton = QPushButton('Velg Mappe...', self)
         self.filmButton = QPushButton('Velg fil...')
         self.filButton = QPushButton('Velg lydfil...', self)
         self.execButton = QPushButton('Kjør', self)
 
     def create_combobox(self):
+        """
+        Create a combobox for FPS selection.
+        """
         self.fpsCounter = QComboBox(self)
-        for i in range(1, 61):  # Determines range of the fps options (1-60)
+        for i in range(1, 61):
             self.fpsCounter.addItem(str(i))
         self.fpsCounter.setCurrentIndex(23)
         self.fpsCounter.view().parentWidget().setMaximumHeight(200)
         self.fpsCounter.setMaximumSize(50, 30)
 
     def create_text_output(self):
+        """
+        Create a text output area for logs.
+        """
         self.output_text = QTextEdit()
         self.output_text.setReadOnly(True)
         self.output_text.setHidden(True)
 
     def create_progressbar(self):
+        """
+        Create a progress bar for indicating process progress.
+        """
         self.progress_bar = QProgressBar(self)
 
     def setup_layout(self):
+        """
+        Set up the layout of the UI components.
+        """
         self.mappe_input_field = QLineEdit(self)
         self.fil_input_field = QLineEdit(self)
 
@@ -148,12 +204,18 @@ class Smelt(QWidget):
         self.setLayout(layout)
 
     def set_default_states(self):
-        self.inkluderLydCheckBox.setChecked(True)  # Generer Audio
-        self.inkluderProresCheckBox.setChecked(True)  # Generer Prores
-        self.kunLydCheckBox.setChecked(False)  # Generer KUN lydfil
-        self.mezzaninfilCheckBox.setChecked(True)  # Generer Mezzaninfil
+        """
+        Set the default states of checkboxes and other UI elements.
+        """
+        self.inkluderLydCheckBox.setChecked(True)
+        self.inkluderProresCheckBox.setChecked(True)
+        self.kunLydCheckBox.setChecked(False)
+        self.mezzaninfilCheckBox.setChecked(True)
 
     def designate_button_methods(self):
+        """
+        Designate methods to buttons and other UI elements.
+        """
         self.execButton.clicked.connect(self.run_smelt)
         self.kunLydCheckBox.clicked.connect(self.check_box_logic)
         self.filButton.clicked.connect(lambda: self.select_file_or_folder('audio'))
@@ -161,6 +223,9 @@ class Smelt(QWidget):
         self.filmButton.clicked.connect(lambda: self.select_file_or_folder('film'))
 
     def set_styling(self):
+        """
+        Set the styling of the UI elements.
+        """
         self.fil_input_field.setStyleSheet("border: 1px solid gray;")
         self.mappe_input_field.setStyleSheet('border: 1px solid gray;')
         self.setStyleSheet("background-color: #2B2B2B; color: white;")
@@ -168,6 +233,12 @@ class Smelt(QWidget):
         self.resize(550, 200)
 
     def select_file_or_folder(self, file_type):
+        """
+        Open a file selection dialog based on the file type.
+
+        Args:
+            file_type (str): The type of file to select ('mappe', 'film', 'audio').
+        """
         dialog = QFileDialog()
         if file_type == 'mappe':
             folder_path = dialog.getExistingDirectory(None, "Velg Mappe")
@@ -199,17 +270,25 @@ class Smelt(QWidget):
                         self.fil_input_field.setText(os.path.basename(combined_audio_file))
 
     def recognize_and_combine_audio_files(self, selected_audio_file):
+        """
+        Recognize and combine multi-channel audio files into a single file.
+
+        Args:
+            selected_audio_file (str): The path of the selected audio file.
+
+        Returns:
+            str: The path of the combined audio file, or None if the process fails.
+        """
         base_name = re.sub(r'\.[A-Za-z]+\.\w+$', '', os.path.basename(selected_audio_file))
         directory = os.path.dirname(selected_audio_file)
 
-        # Define the possible suffixes and their respective order
         suffixes = {
-            'L': 'left',         # Left — Music & Effects
-            'R': 'right',        # Right — Music & Effects
-            'C': 'center',       # Center — Dialog
-            'LFE': 'lfe',        # Low Frequency Effects (LFE) — Subwoofer
-            'Ls': 'left_surround',  # Left Surround — Surround Effects
-            'Rs': 'right_surround'  # Right Surround — Surround Effects
+            'L': 'left',
+            'R': 'right',
+            'C': 'center',
+            'LFE': 'lfe',
+            'Ls': 'left_surround',
+            'Rs': 'right_surround'
         }
 
         matching_files = {}
@@ -233,17 +312,16 @@ class Smelt(QWidget):
         combined_audio_file = os.path.join(directory, f"{base_name}_combined.wav")
         proceed_combine = self.exist_check(combined_audio_file)
 
-        # FFmpeg command to combine the audio files into one using amerge
         ffmpeg_combine_audio_cmd = [
             'ffmpeg',
-            '-i', matching_files['L'],  # Left — Music & Effects
-            '-i', matching_files['R'],  # Right — Music & Effects
-            '-i', matching_files['C'],  # Center — Dialog
-            '-i', matching_files['LFE'],  # Low Frequency Effects (LFE) — Subwoofer
-            '-i', matching_files['Ls'],  # Left Surround — Surround Effects
-            '-i', matching_files['Rs'],  # Right Surround — Surround Effects
+            '-i', matching_files['L'],
+            '-i', matching_files['R'],
+            '-i', matching_files['C'],
+            '-i', matching_files['LFE'],
+            '-i', matching_files['Ls'],
+            '-i', matching_files['Rs'],
             '-filter_complex', '[0][1][2][3][4][5]amerge=inputs=6,pan=6c|c0<c0|c1<c1|c2<c2|c3<c3|c4<c4|c5<c5',
-            '-ac', '6',  # Ensure output is 6 channels
+            '-ac', '6',
             '-c:a', 'pcm_s16le',
             combined_audio_file,
             proceed_combine
@@ -255,16 +333,20 @@ class Smelt(QWidget):
         self.progress_bar.reset()
         return combined_audio_file
 
-    def mappe_sok(self, folder_path):  # Searches through the folder for acceptable filetypes
+    def mappe_sok(self, folder_path):
+        """
+        Search through the folder for acceptable file types.
+
+        Args:
+            folder_path (str): The path of the folder to search in.
+        """
         dpx_files = glob.glob(os.path.join(folder_path, '*.dpx'))
         mxf_files = [f for f in glob.glob(os.path.join(folder_path, '*.mxf')) if 'AUDIO' not in os.path.basename(f).upper()]
         mov_files = glob.glob(os.path.join(folder_path, '*.mov'))
-        # optional_files = glob.glob(os.path.join(folder_path, '*.optional'))
 
         dpx_button = QPushButton(".dpx files")
         mxf_button = QPushButton(".mxf files")
         mov_button = QPushButton(".mov files")
-        # optional_button = QPushButton('.optional files')
 
         if dpx_files and mxf_files and mov_files:
             msg = create_file_selection_box(
@@ -325,7 +407,10 @@ class Smelt(QWidget):
             self.selected_files = []
             QMessageBox.warning(self, 'Advarsel', 'Ingen .dpx, .mxf (FILM), eller .mov filer funnet i den valgte mappen.')
 
-    def check_box_logic(self):  # This method prevents illegal operation combinations
+    def check_box_logic(self):
+        """
+        Prevent illegal operation combinations by enabling/disabling checkboxes.
+        """
         if self.kunLydCheckBox.isChecked():
             self.inkluderLydCheckBox.setChecked(True)
             self.inkluderLydCheckBox.setEnabled(False)
@@ -338,7 +423,13 @@ class Smelt(QWidget):
             self.inkluderProresCheckBox.setEnabled(True)
             self.fpsCounter.setEnabled(True)
 
-    def lock_down(self, lock):  # Locks or unlocks the interface based on the 'lock' parameter
+    def lock_down(self, lock):
+        """
+        Lock or unlock the interface based on the 'lock' parameter.
+
+        Args:
+            lock (bool): True to lock the interface, False to unlock.
+        """
         widgets_to_lock = [
             self.inkluderLydCheckBox,
             self.inkluderProresCheckBox,
@@ -355,18 +446,25 @@ class Smelt(QWidget):
         for widget in widgets_to_lock:
             widget.setEnabled(not lock)
 
-    def DropDownListFix(self):  # Attempts to fix the god-damn dropdown box
-        # Get the view of the combo box
+    def DropDownListFix(self):
+        """
+        Attempt to fix the dropdown box styling.
+        """
         view = self.fpsCounter.view()
         if self.fpsCounter.currentIndex() % 2 == 0:
             view.setStyleSheet("border: 2px solid gray;")
         else:
             view.setStyleSheet("border: 2px solid red;")
-        # Ensure the view updates its geometry
         view.updateGeometry()
         view.update()
 
     def determine_file_type(self):
+        """
+        Determine the file type based on the mappe_input_field text.
+
+        Returns:
+            str: The file type ('mxf', 'mov', 'dpx') or None if unsupported.
+        """
         file_path = self.mappe_input_field.text().strip()
         if not file_path:
             QMessageBox.warning(self, 'Error', 'No file selected.')
@@ -385,17 +483,18 @@ class Smelt(QWidget):
             return None
 
     def check_path_validity(self):
+        """
+        Check the validity of paths entered in the input fields and update attributes accordingly.
+        """
         mappe_input_text = self.mappe_input_field.text().strip()
         fil_input_text = self.fil_input_field.text().strip()
 
-        # Check if mappe_input_text is a valid directory or file path
         if os.path.isdir(mappe_input_text):
             self.folder_path = mappe_input_text
         elif os.path.isfile(mappe_input_text):
             self.folder_path = os.path.dirname(mappe_input_text)
             self.film_file_path = mappe_input_text
 
-        # Check if fil_input_text is a valid file path
         if os.path.isfile(fil_input_text):
             self.audio_file_path = fil_input_text
         elif fil_input_text == '':
@@ -403,6 +502,9 @@ class Smelt(QWidget):
             self.inkluderLydCheckBox.setChecked(False)
 
     def run_smelt(self):
+        """
+        Main method to run the Smelt process.
+        """
         self.check_path_validity()
         self.lock_down(True)
         self.output_text.setHidden(False)
@@ -426,6 +528,12 @@ class Smelt(QWidget):
             self.lock_down(False)
 
     def initial_setup(self):
+        """
+        Perform initial setup and validation before running the main process.
+
+        Returns:
+            bool: True if setup is successful, False otherwise.
+        """
         filetype = self.determine_file_type()
         folder_path = self.folder_path
 
@@ -458,6 +566,15 @@ class Smelt(QWidget):
         return True
 
     def check_dpx_files(self, folder_path):
+        """
+        Check for DPX files in the specified folder.
+
+        Args:
+            folder_path (str): The path of the folder to check.
+
+        Returns:
+            bool: True if DPX files are found and confirmed, False otherwise.
+        """
         pattern = os.path.join(folder_path, '*.dpx')
         matching_files = glob.glob(pattern)
 
@@ -473,6 +590,9 @@ class Smelt(QWidget):
         return result == QMessageBox.Ok
 
     def handle_video_operations(self):
+        """
+        Handle video processing operations based on file type.
+        """
         filetype = self.determine_file_type()
         if filetype == 'dpx':
             self.construct_dpx_commands()
@@ -489,14 +609,20 @@ class Smelt(QWidget):
             self.execute_ffmpeg_commands(['ffmpeg_lossless_cmd', 'ffmpeg_prores_cmd', 'ffmpeg_h264_cmd'])
 
     def handle_audio_operations(self):
+        """
+        Handle audio processing operations.
+        """
         self.construct_audio_commands()
         self.execute_ffmpeg_commands(['ffmpeg_lossless_audio_cmd', 'ffmpeg_audio_cmd'])
 
     def construct_dpx_commands(self):
+        """
+        Construct FFmpeg commands for DPX file processing.
+        """
         base_filename = os.path.basename(self.images_path)
         prefix = re.match(r'^\D*', base_filename).group()
         ffmpeg_input_pattern = os.path.join(self.folder_path, f'{prefix}%06d.dpx')
-    
+
         self.ffmpeg_base_cmd = [
             'ffmpeg',
             '-v', 'error',
@@ -514,7 +640,7 @@ class Smelt(QWidget):
             audio_cmd = ['-c:a', 'copy']
         else:
             audio_cmd = []
-    
+
         self.ffmpeg_lossless_cmd = self.ffmpeg_base_cmd + audio_cmd + [
             '-c:v', 'libx264',
             '-pix_fmt', 'yuv422p10le',
@@ -551,7 +677,7 @@ class Smelt(QWidget):
                 self.h264_mp4,
                 self.proceed_h264
             ]
-    
+
         self.ffmpeg_prores_cmd = [
             'ffmpeg',
             '-i', self.lossless_mov,
@@ -563,7 +689,7 @@ class Smelt(QWidget):
             self.prores_mov,
             self.proceed_prores
         ]
-    
+
         self.ffmpeg_h264_cmd = [
             'ffmpeg',
             '-i', self.lossless_mov,
@@ -578,8 +704,11 @@ class Smelt(QWidget):
             self.h264_mp4,
             self.proceed_h264
         ]
-    
+
     def construct_mxf_mov_commands(self):
+        """
+        Construct FFmpeg commands for MXF and MOV file processing.
+        """
         ffmpeg_base = [
             'ffmpeg',
             '-i', self.video,
@@ -610,10 +739,10 @@ class Smelt(QWidget):
             '-crf', '21',
             '-ac', '2',
         ] + ffmpeg_audio_param + [
-            '-v', 'info',
-            self.h264_mp4,
-            self.proceed_h264
-        ]
+                                       '-v', 'info',
+                                       self.h264_mp4,
+                                       self.proceed_h264
+                                   ]
         self.ffmpeg_h264_from_prores_cmd = ffmpeg_base + ffmpeg_audio + [
             '-c:v', 'libx264',
             '-vf', 'scale=-2:1080',
@@ -626,6 +755,9 @@ class Smelt(QWidget):
         ]
 
     def construct_audio_commands(self):
+        """
+        Construct FFmpeg commands for audio file processing.
+        """
         self.ffmpeg_audio_cmd = [
             'ffmpeg',
             '-i', self.audio_file,
@@ -645,8 +777,14 @@ class Smelt(QWidget):
             self.lossless_mov,
             self.proceed_lossless
         ]
-    
+
     def execute_ffmpeg_commands(self, commands):
+        """
+        Execute a list of FFmpeg commands.
+
+        Args:
+            commands (list): A list of command attribute names to execute.
+        """
         for cmd in commands:
             if hasattr(self, cmd):
                 command = getattr(self, cmd)
@@ -655,9 +793,24 @@ class Smelt(QWidget):
                     break
 
     def update_output(self, text):
+        """
+        Update the output text area with new text.
+
+        Args:
+            text (str): The text to append to the output area.
+        """
         self.output_text.append(text)
 
     def exist_check(self, filtype):
+        """
+        Check if a file exists and prompt the user to overwrite if it does.
+
+        Args:
+            filtype (str): The file path to check.
+
+        Returns:
+            str: '-y' to overwrite, '-n' to skip.
+        """
         if os.path.exists(filtype):
             overwrite = QMessageBox.question(self, 'Filen eksisterer!', f'{filtype} Eksisterer allerede. Overskriv?', QMessageBox.Yes | QMessageBox.No)
             if overwrite == QMessageBox.No:
@@ -666,6 +819,15 @@ class Smelt(QWidget):
         return '-y'
 
     def run_ffmpeg_command(self, command):
+        """
+        Run an FFmpeg command and update the progress bar.
+
+        Args:
+            command (list): The FFmpeg command to run.
+
+        Returns:
+            bool: True if the command was successful, False otherwise.
+        """
         process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
         total_duration = None
 
