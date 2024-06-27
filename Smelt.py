@@ -89,6 +89,16 @@ class Smelt(QWidget):
         super(Smelt, self).__init__()
 
         # Initialize paths and filenames
+        self.ffmpeg_lossless_audio_cmd = None
+        self.ffmpeg_audio_cmd = None
+        self.ffmpeg_h264_from_prores_cmd = None
+        self.ffmpeg_dcp_h264_cmd = None
+        self.ffmpeg_dcp_cmd = None
+        self.ffmpeg_h264_cmd = None
+        self.ffmpeg_prores_cmd = None
+        self.ffmpeg_h264_cmd_direct = None
+        self.ffmpeg_lossless_cmd = None
+        self.ffmpeg_base_cmd = None
         self.step_label = None
         self.images_path = None
         self.proceed_prores = None
@@ -150,6 +160,7 @@ class Smelt(QWidget):
         self.mappeLabel = QLabel('Mappe/fil:', self)
         self.fpsLabel = QLabel('FPS:', self)
         self.step_label = QLabel('Processing Step:', self)
+        self.step_label.setHidden(True)
 
     def create_checkboxes(self):
         """
@@ -235,10 +246,12 @@ class Smelt(QWidget):
         Designate methods to buttons and other UI elements.
         """
         self.execButton.clicked.connect(self.run_smelt)
-        self.kunLydCheckBox.clicked.connect(self.check_box_logic)
         self.filButton.clicked.connect(lambda: self.select_file_or_folder('audio'))
         self.mappeButton.clicked.connect(lambda: self.select_file_or_folder('mappe'))
         self.filmButton.clicked.connect(lambda: self.select_file_or_folder('film'))
+        self.inkluderLydCheckBox.clicked.connect(lambda: self.check_box_logic('lyd'))
+        self.kunLydCheckBox.clicked.connect(lambda: self.check_box_logic('kunlyd'))
+        self.inkluderProresCheckBox.clicked.connect(lambda: self.check_box_logic('prores'))
 
     def set_styling(self):
         """
@@ -259,12 +272,14 @@ class Smelt(QWidget):
         """
         dialog = QFileDialog()
         if file_type == 'mappe':
+            self.check_box_logic('')
             folder_path = dialog.getExistingDirectory(None, "Velg Mappe")
             if folder_path:
                 self.folder_path = folder_path
                 self.mappe_input_field.setText(folder_path)
                 self.mappe_sok(folder_path)
         elif file_type == 'film':
+            self.check_box_logic('')
             file_filter = 'Movie files (*.mov *.mxf);;All Files (*)'
             file_path, _ = dialog.getOpenFileName(None, 'Velg Filmfil', '', file_filter)
             if file_path:
@@ -273,6 +288,7 @@ class Smelt(QWidget):
                 self.folder_path = os.path.dirname(file_path)
                 self.mappe_input_field.setText(file_name)
         elif file_type == 'audio':
+            self.inkluderLydCheckBox.setChecked(True)
             file_filter = 'Audio Files (*.wav *.mxf);;All Files (*)'
             file_path, _ = dialog.getOpenFileName(None, 'Velg Lydfil', self.folder_path, file_filter)
             if file_path:
@@ -427,21 +443,21 @@ class Smelt(QWidget):
             QMessageBox.warning(self, 'Advarsel',
                                 'Ingen .dpx, .mxf (FILM), eller .mov filer funnet i den valgte mappen.')
 
-    def check_box_logic(self):
+    def check_box_logic(self, knapp):
         """
         Prevent illegal operation combinations by enabling/disabling checkboxes.
+        Also toggles between kunLydCheckBox and inkluderProresCheckBox.
         """
-        if self.kunLydCheckBox.isChecked():
-            self.inkluderLydCheckBox.setChecked(True)
-            self.inkluderLydCheckBox.setEnabled(False)
-            self.inkluderProresCheckBox.setChecked(False)
-            self.inkluderProresCheckBox.setEnabled(False)
+        if knapp == 'kunlyd' and self.kunLydCheckBox.isChecked():
             self.fpsCounter.setEnabled(False)
-
-        elif not self.kunLydCheckBox.isChecked() & self.inkluderLydCheckBox.isEnabled():
-            self.inkluderLydCheckBox.setEnabled(True)
-            self.inkluderProresCheckBox.setEnabled(True)
-            self.fpsCounter.setEnabled(True)
+            self.inkluderProresCheckBox.setChecked(False)
+            self.inkluderLydCheckBox.setChecked(True)
+            self.mappe_input_field.setText('')
+            return
+        elif knapp == 'lyd' and not self.inkluderLydCheckBox.isChecked():
+            self.fil_input_field.setText('')
+        self.fpsCounter.setEnabled(True)
+        self.kunLydCheckBox.setChecked(False)
 
     def lock_down(self, lock):
         """
@@ -529,10 +545,12 @@ class Smelt(QWidget):
         self.check_path_validity()
         self.lock_down(True)
         self.output_text.setHidden(False)
+        self.step_label.setHidden(False)
         self.step_label.setText("Initial setup...")  # Initial step
 
         if not self.initial_setup():
             self.lock_down(False)
+            self.step_label.setText('Idle')
             return
 
         try:
