@@ -1,8 +1,23 @@
+"""
+SMELT: A GUI tool for video and audio file processing
+
+This application provides functionalities for:
+- Selecting and processing video and audio files
+- Combining multichannel audio files
+- Converting and processing video files using FFmpeg
+
+Usage:
+1. Run `setup.sh` or `setup.bat` to set up the environment.
+2. Use the GUI to select files and start processing.
+
+"""
 import glob
 import re
 import subprocess
 import sys
 import os
+import time
+
 from PyQt5.QtWidgets import *
 
 
@@ -40,7 +55,7 @@ def select_file_from_list(files, file_type_description):
     """
     dialog = QFileDialog()
     dialog.setFileMode(QFileDialog.ExistingFile)
-    dialog.setNameFilter(f"{file_type_description} Files (*.{file_type_description})")
+    dialog.setNameFilter("{} Files (*.{})".format(file_type_description, file_type_description))
     dialog.setViewMode(QFileDialog.Detail)
     dialog.setDirectory(os.path.dirname(files[0]))
 
@@ -71,9 +86,10 @@ class Smelt(QWidget):
     """
 
     def __init__(self):
-        super().__init__()
+        super(Smelt, self).__init__()
 
         # Initialize paths and filenames
+        self.step_label = None
         self.images_path = None
         self.proceed_prores = None
         self.proceed_lossless = None
@@ -109,9 +125,9 @@ class Smelt(QWidget):
         self.mappe_input_field = None
         self.fil_input_field = None
 
-        self.initUI()
+        self.init_ui()
 
-    def initUI(self):
+    def init_ui(self):
         """
         Initialize the user interface.
         """
@@ -133,6 +149,7 @@ class Smelt(QWidget):
         self.filLabel = QLabel('Lydfil:', self)
         self.mappeLabel = QLabel('Mappe/fil:', self)
         self.fpsLabel = QLabel('FPS:', self)
+        self.step_label = QLabel('Processing Step:', self)
 
     def create_checkboxes(self):
         """
@@ -201,6 +218,7 @@ class Smelt(QWidget):
         layout.addWidget(self.output_text, 12, 0, 1, 5)
         layout.addWidget(self.progress_bar, 10, 0, 1, 4)
         layout.addWidget(self.execButton, 10, 4)
+        layout.addWidget(self.step_label, 11, 0, 1, 5)
         self.setLayout(layout)
 
     def set_default_states(self):
@@ -271,7 +289,7 @@ class Smelt(QWidget):
 
     def recognize_and_combine_audio_files(self, selected_audio_file):
         """
-        Recognize and combine multi-channel audio files into a single file.
+        Recognize and combine multichannel audio files into a single file.
 
         Args:
             selected_audio_file (str): The path of the selected audio file.
@@ -293,7 +311,7 @@ class Smelt(QWidget):
 
         matching_files = {}
         for suffix in suffixes.keys():
-            potential_file = os.path.join(directory, f"{base_name}.{suffix}.wav")
+            potential_file = os.path.join(directory, "{}.{}.wav".format(base_name, suffix))
             if os.path.exists(potential_file):
                 matching_files[suffix] = potential_file
 
@@ -309,7 +327,7 @@ class Smelt(QWidget):
             QMessageBox.warning(self, 'Error', 'Ikke alle nødvendige lydfiler (.L, .R, .C, .LFE, .Ls, .Rs) ble funnet.')
             return None
 
-        combined_audio_file = os.path.join(directory, f"{base_name}_combined.wav")
+        combined_audio_file = os.path.join(directory, "{}_combined.wav".format(base_name))
         proceed_combine = self.exist_check(combined_audio_file)
 
         ffmpeg_combine_audio_cmd = [
@@ -341,7 +359,8 @@ class Smelt(QWidget):
             folder_path (str): The path of the folder to search in.
         """
         dpx_files = glob.glob(os.path.join(folder_path, '*.dpx'))
-        mxf_files = [f for f in glob.glob(os.path.join(folder_path, '*.mxf')) if 'AUDIO' not in os.path.basename(f).upper()]
+        mxf_files = [f for f in glob.glob(os.path.join(folder_path, '*.mxf')) if
+                     'AUDIO' not in os.path.basename(f).upper()]
         mov_files = glob.glob(os.path.join(folder_path, '*.mov'))
 
         dpx_button = QPushButton(".dpx files")
@@ -372,7 +391,7 @@ class Smelt(QWidget):
             msg = None
 
         if msg:
-            retval = msg.exec_()
+            msg.exec_()
             if msg.clickedButton() == dpx_button:
                 self.selected_files = dpx_files
             elif msg.clickedButton() == mxf_button:
@@ -405,7 +424,8 @@ class Smelt(QWidget):
             self.mappe_input_field.setText(mov_files[0])
         else:
             self.selected_files = []
-            QMessageBox.warning(self, 'Advarsel', 'Ingen .dpx, .mxf (FILM), eller .mov filer funnet i den valgte mappen.')
+            QMessageBox.warning(self, 'Advarsel',
+                                'Ingen .dpx, .mxf (FILM), eller .mov filer funnet i den valgte mappen.')
 
     def check_box_logic(self):
         """
@@ -446,7 +466,7 @@ class Smelt(QWidget):
         for widget in widgets_to_lock:
             widget.setEnabled(not lock)
 
-    def DropDownListFix(self):
+    def drop_down_list_fix(self):
         """
         Attempt to fix the dropdown box styling.
         """
@@ -467,7 +487,8 @@ class Smelt(QWidget):
         """
         file_path = self.mappe_input_field.text().strip()
         if not file_path:
-            QMessageBox.warning(self, 'Error', 'No file selected.')
+            if not self.kunLydCheckBox.isChecked:
+                QMessageBox.warning(self, 'Error', 'No file selected.')
             return None
 
         _, file_extension = os.path.splitext(file_path)
@@ -484,7 +505,7 @@ class Smelt(QWidget):
 
     def check_path_validity(self):
         """
-        Check the validity of paths entered in the input fields and update attributes accordingly.
+        Check the validity of the paths in the input fields and update attributes accordingly.
         """
         mappe_input_text = self.mappe_input_field.text().strip()
         fil_input_text = self.fil_input_field.text().strip()
@@ -508,6 +529,7 @@ class Smelt(QWidget):
         self.check_path_validity()
         self.lock_down(True)
         self.output_text.setHidden(False)
+        self.step_label.setText("Initial setup...")  # Initial step
 
         if not self.initial_setup():
             self.lock_down(False)
@@ -520,12 +542,14 @@ class Smelt(QWidget):
                 self.handle_audio_operations()
 
             QMessageBox.information(self, 'Success', 'Konvertering fullført.')
-            self.progress_bar.setValue(100)
         except subprocess.CalledProcessError as e:
-            QMessageBox.critical(self, 'Error', f'En feil oppstod: {e}')
+            QMessageBox.critical(self, 'Error', 'En feil oppstod: {}'.format(e))
             self.output_text.append('Error: ' + str(e))
         finally:
             self.lock_down(False)
+            self.step_label.setText("Idle")
+            self.progress_bar.setValue(100)
+            self.progress_bar.setFormat("100% - Done")
 
     def initial_setup(self):
         """
@@ -552,9 +576,9 @@ class Smelt(QWidget):
         self.folder_name = os.path.basename(folder_path)
         self.audio_file = self.audio_file_path or ''
 
-        self.lossless_mov = os.path.join(folder_path, 'lossless', f'{self.folder_name}.mov')
-        self.prores_mov = os.path.join(folder_path, 'lossless', f'{self.folder_name}_prores.mov')
-        self.h264_mp4 = os.path.join(folder_path, 'lossless', f'nb-no_{self.folder_name}.mp4')
+        self.lossless_mov = os.path.join(folder_path, 'lossless', '{}.mov'.format(self.folder_name))
+        self.prores_mov = os.path.join(folder_path, 'lossless', '{}_prores.mov'.format(self.folder_name))
+        self.h264_mp4 = os.path.join(folder_path, 'lossless', 'nb-no_{}.mp4'.format(self.folder_name))
 
         os.makedirs(os.path.join(folder_path, 'logs'), exist_ok=True)
         os.makedirs(os.path.join(folder_path, 'lossless'), exist_ok=True)
@@ -579,14 +603,15 @@ class Smelt(QWidget):
         matching_files = glob.glob(pattern)
 
         if not matching_files:
-            QMessageBox.warning(self, 'Error', f'Finner ingen .dpx filer i {folder_path}.')
+            QMessageBox.warning(self, 'Error', 'Finner ingen .dpx filer i {}.'.format(folder_path))
             return False
 
         matching_files.sort(key=extract_number)
         self.images_path = matching_files[0]
-        print(f'Found file: {self.images_path}')
+        print('Found file: {}'.format(self.images_path))
 
-        result = QMessageBox.question(self, 'Start konvertering', f'Fant {os.path.basename(self.images_path)} i {folder_path}. Trykk ok for å gå videre.', QMessageBox.Ok | QMessageBox.Cancel)
+        result = QMessageBox.question(self, 'Start konvertering', 'Fant {} i {}. Trykk ok for å gå videre.'.format(
+            os.path.basename(self.images_path), folder_path), QMessageBox.Ok | QMessageBox.Cancel)
         return result == QMessageBox.Ok
 
     def handle_video_operations(self):
@@ -621,7 +646,7 @@ class Smelt(QWidget):
         """
         base_filename = os.path.basename(self.images_path)
         prefix = re.match(r'^\D*', base_filename).group()
-        ffmpeg_input_pattern = os.path.join(self.folder_path, f'{prefix}%06d.dpx')
+        ffmpeg_input_pattern = os.path.join(self.folder_path, '{}%06d.dpx'.format(prefix))
 
         self.ffmpeg_base_cmd = [
             'ffmpeg',
@@ -714,7 +739,7 @@ class Smelt(QWidget):
             '-i', self.video,
         ]
         if self.inkluderLydCheckBox.isChecked and self.audio_file:
-            ffmpeg_audio = ['-i', self.audio_file,]
+            ffmpeg_audio = ['-i', self.audio_file, ]
             ffmpeg_audio_param = [
                 '-c:a', 'aac',
                 '-b:a', '224k',
@@ -785,7 +810,9 @@ class Smelt(QWidget):
         Args:
             commands (list): A list of command attribute names to execute.
         """
-        for cmd in commands:
+        for i, cmd in enumerate(commands):
+            step_text = "Step {}/{}: Running {}".format(i + 1, len(commands), cmd.replace('_', ' ').title())
+            self.step_label.setText(step_text)
             if hasattr(self, cmd):
                 command = getattr(self, cmd)
                 self.output_text.append('Running command: ' + ' '.join(command))
@@ -812,9 +839,11 @@ class Smelt(QWidget):
             str: '-y' to overwrite, '-n' to skip.
         """
         if os.path.exists(filtype):
-            overwrite = QMessageBox.question(self, 'Filen eksisterer!', f'{filtype} Eksisterer allerede. Overskriv?', QMessageBox.Yes | QMessageBox.No)
+            overwrite = QMessageBox.question(self, 'Filen eksisterer!',
+                                             '{} Eksisterer allerede. Overskriv?'.format(filtype),
+                                             QMessageBox.Yes | QMessageBox.No)
             if overwrite == QMessageBox.No:
-                self.output_text.append(f'Avbrutt. {filtype} eksiterer allerede.')
+                self.output_text.append('Avbrutt. {} eksiterer allerede.'.format(filtype))
                 return '-n'
         return '-y'
 
@@ -830,6 +859,7 @@ class Smelt(QWidget):
         """
         process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
         total_duration = None
+        start_time = None
 
         for line in iter(process.stderr.readline, ''):
             self.output_text.append(line.strip())
@@ -842,6 +872,7 @@ class Smelt(QWidget):
                     minutes = int(duration_match.group(2))
                     seconds = int(duration_match.group(3))
                     total_duration = hours * 3600 + minutes * 60 + seconds
+                    start_time = time.time()
 
             time_match = re.search(r'time=(\d+):(\d+):(\d+).(\d+)', line)
             if time_match and total_duration:
@@ -850,13 +881,18 @@ class Smelt(QWidget):
                 seconds = int(time_match.group(3))
                 current_time = hours * 3600 + minutes * 60 + seconds
                 progress = (current_time / total_duration) * 100
+                elapsed_time = time.time() - start_time
+                remaining_time = elapsed_time * (100 - progress) / progress if progress > 0 else 0
                 self.progress_bar.setValue(int(progress))
+                self.progress_bar.setFormat(
+                    "{}% - Estimated time left: {}m {}s".format(int(progress), int(remaining_time // 60),
+                                                                int(remaining_time % 60)))
 
         process.wait()
 
         if process.returncode != 0:
             error_output = process.stderr.read()
-            self.output_text.append(f'Error: {error_output}')
+            self.output_text.append('Error: {}'.format(error_output))
             return False
         return True
 
