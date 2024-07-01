@@ -12,10 +12,12 @@ Usage:
 
 """
 import glob
+import queue
 import re
 import subprocess
 import sys
 import os
+import threading
 import time
 
 from PyQt5.QtWidgets import *
@@ -80,6 +82,26 @@ def extract_number(filename):
     return int(match.group(1)) if match else float('inf')
 
 
+def cuda_available():
+    try:
+        # Check if ffmpeg has CUDA support
+        result = subprocess.run(['ffmpeg', '-hwaccels'], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                universal_newlines=True)
+        if 'cuda' in result.stdout:
+            # Check if nvidia-smi is available (indicates presence of NVIDIA GPU)
+            result = subprocess.run(['nvidia-smi'], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                    universal_newlines=True)
+            if result.returncode == 0:
+                return True
+        return False
+    except FileNotFoundError:
+        # Handle case where 'nvidia-smi' is not found
+        return False
+    except Exception as e:
+        print("CUDA availability check failed: {}".format(e))
+        return False
+
+
 class Smelt(QWidget):
     """
     Smelt GUI application for video and audio processing.
@@ -89,6 +111,8 @@ class Smelt(QWidget):
         super(Smelt, self).__init__()
 
         # Initialize paths and filenames
+        self.ffmpeg_encoder = None
+        self.video_encoder = None
         self.ffmpeg_lossless_audio_cmd = None
         self.ffmpeg_audio_cmd = None
         self.ffmpeg_h264_from_prores_cmd = None
@@ -98,7 +122,7 @@ class Smelt(QWidget):
         self.ffmpeg_prores_cmd = None
         self.ffmpeg_h264_cmd_direct = None
         self.ffmpeg_lossless_cmd = None
-        self.ffmpeg_base_cmd = None
+        self.ffmpeg_base = None
         self.step_label = None
         self.images_path = None
         self.proceed_prores = None
@@ -590,6 +614,23 @@ class Smelt(QWidget):
             else:
                 self.video = self.mappe_input_field.text()
 
+        if cuda_available():
+            self.ffmpeg_hardware_accel = [
+                '-hwaccel', 'cuda',
+            ]
+            self.ffmpeg_encoder = [
+                '-c:v', 'hevc_nvenc',
+                '-pix_fmt', 'yuv422p10le',
+            ]
+        else:
+            self.ffmpeg_hardware_accel = [
+                '-hwaccel', 'auto',
+            ]
+            self.ffmpeg_encoder = [
+                '-c:v', 'libx264',
+                '-pix_fmt', 'yuv422p10le',
+            ]
+
         self.fps = self.fpsCounter.currentText()
         self.folder_name = os.path.basename(folder_path)
         self.audio_file = self.audio_file_path or ''
@@ -666,11 +707,13 @@ class Smelt(QWidget):
         prefix = re.match(r'^\D*', base_filename).group()
         ffmpeg_input_pattern = os.path.join(self.folder_path, '{}%06d.dpx'.format(prefix))
 
-        self.ffmpeg_base_cmd = [
-            'ffmpeg',
-            '-v', 'error',
-            '-stats',
+        self.ffmpeg_base = [
+            'ffmpeg', '-v',
+            'info', '-stats',
             '-progress', '-',
+        ]
+
+        ffmpeg_dpx = [
             '-f', 'image2',
             '-vsync', '0',
             '-framerate', self.fps,
@@ -679,34 +722,19 @@ class Smelt(QWidget):
         ]
 
         if self.inkluderLydCheckBox.isChecked() and os.path.exists(self.audio_file):
-            self.ffmpeg_base_cmd.extend(['-i', self.audio_file])
+            ffmpeg_dpx.extend(['-i', self.audio_file])
             audio_cmd = ['-c:a', 'copy']
         else:
             audio_cmd = []
 
-        self.ffmpeg_lossless_cmd = self.ffmpeg_base_cmd + audio_cmd + [
-            '-c:v', 'libx264',
-            '-pix_fmt', 'yuv422p10le',
-            '-qp', '0',
-            '-v', 'info',
-            self.lossless_mov,
-            self.proceed_lossless
-        ]
-        if not self.inkluderLydCheckBox:
-            self.ffmpeg_h264_cmd_direct = self.ffmpeg_base_cmd + [
-                '-c:v', 'libx264',
-                '-pix_fmt', 'yuv420p',
-                '-vf', 'scale=-2:1080',
-                '-preset', 'slow',
-                '-crf', '23',
-                '-map', '0:v:0',
-                '-v', 'info',
-                self.h264_mp4,
-                self.proceed_h264
+        self.ffmpeg_lossless_cmd = self.ffmpeg_base + self.ffmpeg_hardware_accel + ffmpeg_dpx + self.ffmpeg_encoder + audio_cmd + [
+                '-qp', '0',
+                self.lossless_mov,
+                self.proceed_lossless
             ]
-        else:
-            self.ffmpeg_h264_cmd_direct = self.ffmpeg_base_cmd + [
-                '-i', self.audio_file,
+
+        if self.inkluderLydCheckBox.isChecked():
+            self.ffmpeg_h264_cmd_direct = self.ffmpeg_base + self.ffmpeg_hardware_accel + ffmpeg_dpx + audio_cmd + [
                 '-c:v', 'libx264',
                 '-pix_fmt', 'yuv420p',
                 '-vf', 'scale=-2:1080',
@@ -716,58 +744,60 @@ class Smelt(QWidget):
                 '-b:a', '224k',
                 '-map', '0:v:0',
                 '-map', '1:a:0',
-                '-v', 'info',
+                self.h264_mp4,
+                self.proceed_h264
+            ]
+        else:
+            self.ffmpeg_h264_cmd_direct = self.ffmpeg_base + self.ffmpeg_hardware_accel + ffmpeg_dpx + [
+                '-c:v', 'libx264',
+                '-pix_fmt', 'yuv420p',
+                '-vf', 'scale=-2:1080',
+                '-preset', 'slow',
+                '-crf', '23',
+                '-map', '0:v:0',
                 self.h264_mp4,
                 self.proceed_h264
             ]
 
-        self.ffmpeg_prores_cmd = [
-            'ffmpeg',
+        self.ffmpeg_prores_cmd = self.ffmpeg_base + self.ffmpeg_hardware_accel + [
             '-i', self.lossless_mov,
             '-c:v', 'prores',
             '-profile:v', '3',
             '-vf', 'scale=-2:1080',
             '-c:a', 'pcm_s16le',
-            '-v', 'info',
             self.prores_mov,
             self.proceed_prores
         ]
 
-        self.ffmpeg_h264_cmd = [
-            'ffmpeg',
+        self.ffmpeg_h264_cmd = self.ffmpeg_base + self.ffmpeg_hardware_accel + [
             '-i', self.lossless_mov,
-            '-c:v', 'libx264',
-            '-vf', 'scale=-2:1080',
-            '-pix_fmt', 'yuv420p',
-            '-preset', 'slow',
-            '-crf', '23',
-            '-c:a', 'aac',
-            '-b:a', '224k',
-            '-v', 'info',
-            self.h264_mp4,
-            self.proceed_h264
-        ]
+        ] + self.ffmpeg_encoder + [
+                                   '-vf', 'scale=-2:1080',
+                                   '-pix_fmt', 'yuv420p',
+                                   '-preset', 'slow',
+                                   '-crf', '23',
+                                   '-c:a', 'aac',
+                                   '-b:a', '224k',
+                                   self.h264_mp4,
+                                   self.proceed_h264
+                               ]
 
     def construct_mxf_mov_commands(self):
         """
         Construct FFmpeg commands for MXF and MOV file processing.
         """
-        ffmpeg_base = [
-            'ffmpeg',
-            '-i', self.video,
-        ]
+        ffmpeg_base = ['ffmpeg',]
+
         if self.inkluderLydCheckBox.isChecked and self.audio_file:
-            ffmpeg_audio = ['-i', self.audio_file, ]
+            ffmpeg_video_audio = ['-i', self.video, '-i', self.audio_file, ]
             ffmpeg_audio_param = [
                 '-c:a', 'aac',
                 '-b:a', '224k',
             ]
         else:
-            ffmpeg_audio = []
+            ffmpeg_video_audio = ['-i', self.video,]
             ffmpeg_audio_param = []
-        self.ffmpeg_dcp_cmd = ffmpeg_base + ffmpeg_audio + [
-            '-c:v', 'libx264',
-            '-pix_fmt', 'yuv422p10le',
+        self.ffmpeg_dcp_cmd = ffmpeg_base + self.ffmpeg_hardware_accel + ffmpeg_video_audio + self.ffmpeg_encoder + [
             '-preset', 'slow',
             '-qp', '0',
             '-c:a', 'copy',
@@ -775,7 +805,7 @@ class Smelt(QWidget):
             self.lossless_mov,
             self.proceed_lossless
         ]
-        self.ffmpeg_dcp_h264_cmd = ffmpeg_base + ffmpeg_audio + [
+        self.ffmpeg_dcp_h264_cmd = ffmpeg_base + self.ffmpeg_hardware_accel + ffmpeg_video_audio + [
             '-c:v', 'libx264',
             '-pix_fmt', 'yuv420p',
             '-preset', 'slow',
@@ -786,7 +816,7 @@ class Smelt(QWidget):
                                        self.h264_mp4,
                                        self.proceed_h264
                                    ]
-        self.ffmpeg_h264_from_prores_cmd = ffmpeg_base + ffmpeg_audio + [
+        self.ffmpeg_h264_from_prores_cmd = ffmpeg_base + self.ffmpeg_hardware_accel + ffmpeg_video_audio + [
             '-c:v', 'libx264',
             '-vf', 'scale=-2:1080',
             '-pix_fmt', 'yuv420p',
@@ -876,11 +906,34 @@ class Smelt(QWidget):
             bool: True if the command was successful, False otherwise.
         """
         process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
-        total_duration = None
-        start_time = None
+        stdout_queue = queue.Queue()
+        stderr_queue = queue.Queue()
 
-        for line in iter(process.stderr.readline, ''):
+        def enqueue_output(pipe, queue):
+            for line in iter(pipe.readline, ''):
+                queue.put(line)
+            pipe.close()
+
+        stdout_thread = threading.Thread(target=enqueue_output, args=(process.stdout, stdout_queue))
+        stderr_thread = threading.Thread(target=enqueue_output, args=(process.stderr, stderr_queue))
+        stdout_thread.start()
+        stderr_thread.start()
+
+        total_duration = None
+        start_time = time.time()
+        stderr_output = []
+
+        while True:
+            try:
+                line = stderr_queue.get_nowait()
+            except queue.Empty:
+                if process.poll() is not None:
+                    break
+                time.sleep(0.1)
+                continue
+
             self.output_text.append(line.strip())
+            stderr_output.append(line.strip())
             QApplication.processEvents()
 
             if total_duration is None:
@@ -902,15 +955,14 @@ class Smelt(QWidget):
                 elapsed_time = time.time() - start_time
                 remaining_time = elapsed_time * (100 - progress) / progress if progress > 0 else 0
                 self.progress_bar.setValue(int(progress))
-                self.progress_bar.setFormat(
-                    "{}% - Estimated time left: {}m {}s".format(int(progress), int(remaining_time // 60),
-                                                                int(remaining_time % 60)))
+                self.progress_bar.setFormat("{}% - Estimated time left: {}m {}s".format(int(progress), int(remaining_time // 60), int(remaining_time % 60)))
 
+        stdout_thread.join()
+        stderr_thread.join()
         process.wait()
 
         if process.returncode != 0:
-            error_output = process.stderr.read()
-            self.output_text.append('Error: {}'.format(error_output))
+            self.output_text.append('Error: {}'.format('\n'.join(stderr_output)))
             return False
         return True
 
