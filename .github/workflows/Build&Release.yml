@@ -10,7 +10,11 @@ on:
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest]
 
     steps:
     - name: Checkout repository
@@ -27,15 +31,29 @@ jobs:
         pip install pyinstaller
         pip install PyQt5
 
-    - name: Build with PyInstaller
+    - name: Build with PyInstaller (Windows)
+      if: matrix.os == 'windows-latest'
       run: |
         pyinstaller --onefile Smelt.py # replace with your spec file if you have one
 
-    - name: Upload artifact
+    - name: Build with PyInstaller (Linux)
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        pyinstaller --onefile Smelt.py # replace with your spec file if you have one
+
+    - name: Upload artifact (Windows)
+      if: matrix.os == 'windows-latest'
       uses: actions/upload-artifact@v2
       with:
-        name: smelt-executable
+        name: smelt-executable-windows
         path: dist/Smelt.exe
+
+    - name: Upload artifact (Linux)
+      if: matrix.os == 'ubuntu-latest'
+      uses: actions/upload-artifact@v2
+      with:
+        name: smelt-executable-linux
+        path: dist/Smelt
 
   release:
     needs: build
@@ -44,11 +62,17 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v2
 
-    - name: Download artifact
+    - name: Download artifact (Windows)
       uses: actions/download-artifact@v2
       with:
-        name: smelt-executable
-        path: ./dist
+        name: smelt-executable-windows
+        path: ./dist/windows
+
+    - name: Download artifact (Linux)
+      uses: actions/download-artifact@v2
+      with:
+        name: smelt-executable-linux
+        path: ./dist/linux
 
     - name: Get latest release version
       id: get_latest_release
@@ -84,12 +108,22 @@ jobs:
         draft: true
         prerelease: true
 
-    - name: Upload Release Asset
+    - name: Upload Release Asset (Windows)
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./dist/Smelt.exe
+        asset_path: ./dist/windows/Smelt.exe
         asset_name: Smelt.exe
+        asset_content_type: application/octet-stream
+
+    - name: Upload Release Asset (Linux)
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./dist/linux/Smelt
+        asset_name: Smelt
         asset_content_type: application/octet-stream
