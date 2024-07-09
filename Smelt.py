@@ -83,6 +83,23 @@ def extract_number(filename):
 
 
 def cuda_available():
+    """
+    Check if CUDA is available on the system.
+
+    This function checks for the presence of CUDA support in FFmpeg and the availability of an NVIDIA GPU using 'nvidia-smi'.
+
+    Returns:
+        bool: True if CUDA is available, False otherwise.
+
+    The function performs the following checks:
+    1. Runs `ffmpeg -hwaccels` to check if CUDA is listed among available hardware accelerations.
+    2. If CUDA is found in the FFmpeg output, runs `nvidia-smi` to check for the presence of an NVIDIA GPU.
+    3. Returns True if both checks pass, otherwise returns False.
+
+    Exceptions:
+        - Handles FileNotFoundError if 'nvidia-smi' is not found.
+        - Catches and prints any other exceptions that occur during the checks.
+    """
     try:
         # Check if ffmpeg has CUDA support
         result = subprocess.run(['ffmpeg', '-hwaccels'], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
@@ -111,6 +128,7 @@ class Smelt(QWidget):
         super(Smelt, self).__init__()
 
         # Initialize paths and filenames
+        self.ffmpeg_dcp_prores = None
         self.ffmpeg_encoder = None
         self.video_encoder = None
         self.ffmpeg_lossless_audio_cmd = None
@@ -684,7 +702,7 @@ class Smelt(QWidget):
             self.construct_mxf_mov_commands()
 
         if filetype == 'mxf':
-            self.execute_ffmpeg_commands(['ffmpeg_dcp_cmd', 'ffmpeg_dcp_h264_cmd'])
+            self.execute_ffmpeg_commands(['ffmpeg_dcp_cmd', 'ffmpeg_dcp_prores', 'ffmpeg_dcp_h264_cmd'])
         elif filetype == 'mov':
             self.execute_ffmpeg_commands(['ffmpeg_h264_from_prores_cmd'])
         elif not self.mezzaninfilCheckBox.isChecked():
@@ -804,6 +822,15 @@ class Smelt(QWidget):
             '-v', 'info',
             self.lossless_mov,
             self.proceed_lossless
+        ]
+        self.ffmpeg_dcp_prores = ffmpeg_base + self.ffmpeg_hardware_accel + ffmpeg_video_audio + [
+            '-c:v', 'prores',
+            '-profile:v', '3',
+            '-pix_fmt', 'yuv422p10le',
+            '-vf', 'scale=-2:1080',
+            '-c:a', 'pcm_s16le',
+            self.prores_mov,
+            self.proceed_prores
         ]
         self.ffmpeg_dcp_h264_cmd = ffmpeg_base + self.ffmpeg_hardware_accel + ffmpeg_video_audio + [
             '-c:v', 'libx264',
