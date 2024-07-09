@@ -30,12 +30,20 @@ jobs:
         python -m pip install --upgrade pip
         pip install pyinstaller
         pip install PyQt5
-        
+
     - name: Install missing libraries (Linux)
       if: matrix.os == 'ubuntu-latest'
       run: |
         sudo apt-get update
-        sudo apt-get install -y libxcb-xinerama0 libxcb-xkb1 libxcb-image0 libxcb-keysyms1 libxcb-icccm4 libxcb-render-util0 libxkbcommon-x11-0
+        sudo apt-get install -y \
+          libxcb-shape0-dev \
+          libxcb-xinerama0 \
+          libxcb-xkb1 \
+          libxcb-image0 \
+          libxcb-keysyms1 \
+          libxcb-icccm4 \
+          libxcb-render-util0 \
+          libxkbcommon-x11-0
 
     - name: Build with PyInstaller (Windows)
       if: matrix.os == 'windows-latest'
@@ -111,7 +119,7 @@ jobs:
         release_name: Release ${{ env.NEW_VERSION }}
         body: |
           Automatic release from GitHub Actions.
-        draft: true
+        draft: false
         prerelease: false
 
     - name: Upload Release Asset (Windows)
