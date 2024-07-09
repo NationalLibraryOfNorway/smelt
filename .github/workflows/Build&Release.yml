@@ -39,7 +39,7 @@ jobs:
 
   release:
     needs: build
-    runs-on: windows
+    runs-on: ubuntu-latest
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
@@ -50,14 +50,35 @@ jobs:
         name: smelt-executable
         path: ./dist
 
+    - name: Get latest release version
+      id: get_latest_release
+      run: |
+        LATEST_VERSION=$(curl -s https://api.github.com/repos/${{ github.repository }}/releases/latest | jq -r .tag_name)
+        if [[ $LATEST_VERSION == null ]]; then
+          LATEST_VERSION="v0.0.0"
+        fi
+        echo "LATEST_VERSION=$LATEST_VERSION" >> $GITHUB_ENV
+
+    - name: Set new version
+      id: set_version
+      run: |
+        LATEST_VERSION=${{ env.LATEST_VERSION }}
+        VERSION_PARTS=(${LATEST_VERSION//./ })
+        MAJOR=${VERSION_PARTS[0]}
+        MINOR=${VERSION_PARTS[1]}
+        PATCH=${VERSION_PARTS[2]}
+        NEW_PATCH=$((PATCH + 1))
+        NEW_VERSION="v0.$MINOR.$NEW_PATCH"
+        echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_ENV
+
     - name: Create Release
       id: create_release
       uses: actions/create-release@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        tag_name: ${{ github.sha }}
-        release_name: Release ${{ github.sha }}
+        tag_name: ${{ env.NEW_VERSION }}
+        release_name: Release ${{ env.NEW_VERSION }}
         body: |
           Automatic release from GitHub Actions.
         draft: true
