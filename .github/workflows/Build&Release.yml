@@ -64,10 +64,6 @@ jobs:
       run: |
         pyinstaller --onefile Smelt.py # replace with your spec file if you have one
 
-    - name: Make executable (Linux)
-      if: matrix.os == 'ubuntu-latest'
-      run: chmod +x dist/Smelt
-
     - name: Upload artifact (Windows)
       if: matrix.os == 'windows-latest'
       uses: actions/upload-artifact@v2
@@ -100,6 +96,9 @@ jobs:
       with:
         name: smelt-executable-linux
         path: ./dist/linux
+
+    - name: Set executable permission (Linux)
+      run: chmod +x ./dist/linux/Smelt
 
     - name: Get latest release version
       id: get_latest_release
