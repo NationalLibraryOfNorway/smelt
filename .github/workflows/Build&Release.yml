@@ -119,7 +119,7 @@ jobs:
         release_name: Release ${{ env.NEW_VERSION }}
         body: |
           Automatic release from GitHub Actions.
-        draft: false
+        draft: true
         prerelease: false
 
     - name: Upload Release Asset (Windows)
