@@ -30,6 +30,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install pyinstaller
         pip install PyQt5
+        if [[ ${{ matrix.os }} == 'windows-latest' ]]; then pip install pywin32; fi
 
     - name: Install missing libraries (Linux)
       if: matrix.os == 'ubuntu-latest'
@@ -54,6 +55,10 @@ jobs:
       if: matrix.os == 'ubuntu-latest'
       run: |
         pyinstaller --onefile Smelt.py # replace with your spec file if you have one
+
+    - name: Make executable (Linux)
+      if: matrix.os == 'ubuntu-latest'
+      run: chmod +x dist/Smelt
 
     - name: Upload artifact (Windows)
       if: matrix.os == 'windows-latest'
