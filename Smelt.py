@@ -313,14 +313,16 @@ class Smelt(QWidget):
             file_type (str): The type of file to select ('mappe', 'film', 'audio').
         """
         dialog = QFileDialog()
-        if file_type == 'mappe':
+
+        def select_mappe():
             self.check_box_logic('')
             folder_path = dialog.getExistingDirectory(None, "Velg Mappe")
             if folder_path:
                 self.folder_path = folder_path
                 self.mappe_input_field.setText(folder_path)
                 self.mappe_sok(folder_path)
-        elif file_type == 'film':
+
+        def select_film():
             self.check_box_logic('')
             file_filter = 'Movie files (*.mov *.mxf);;All Files (*)'
             file_path, _ = dialog.getOpenFileName(None, 'Velg Filmfil', '', file_filter)
@@ -329,7 +331,8 @@ class Smelt(QWidget):
                 file_name = os.path.basename(file_path)
                 self.folder_path = os.path.dirname(file_path)
                 self.mappe_input_field.setText(file_name)
-        elif file_type == 'audio':
+
+        def select_audio():
             self.inkluderLydCheckBox.setChecked(True)
             file_filter = 'Audio Files (*.wav *.mxf);;All Files (*)'
             file_path, _ = dialog.getOpenFileName(None, 'Velg Lydfil', self.folder_path, file_filter)
@@ -344,6 +347,14 @@ class Smelt(QWidget):
                     if combined_audio_file:
                         self.audio_file_path = combined_audio_file
                         self.fil_input_field.setText(os.path.basename(combined_audio_file))
+
+        switch = {
+            'mappe': select_mappe,
+            'film': select_film,
+            'audio': select_audio
+        }
+
+        switch.get(file_type, lambda: None)()
 
     def recognize_and_combine_audio_files(self, selected_audio_file):
         """
@@ -416,74 +427,49 @@ class Smelt(QWidget):
         Args:
             folder_path (str): The path of the folder to search in.
         """
-        dpx_files = glob.glob(os.path.join(folder_path, '*.dpx'))
-        mxf_files = [f for f in glob.glob(os.path.join(folder_path, '*.mxf')) if
-                     'AUDIO' not in os.path.basename(f).upper()]
-        mov_files = glob.glob(os.path.join(folder_path, '*.mov'))
+        file_types = {
+            '.dpx': glob.glob(os.path.join(folder_path, '*.dpx')),
+            '.mxf': [f for f in glob.glob(os.path.join(folder_path, '*.mxf')) if 'AUDIO' not in os.path.basename(f).upper()],
+            '.mov': glob.glob(os.path.join(folder_path, '*.mov'))
+        }
 
-        dpx_button = QPushButton(".dpx files")
-        mxf_button = QPushButton(".mxf files")
-        mov_button = QPushButton(".mov files")
+        available_types = {ext: files for ext, files in file_types.items() if files}
+        buttons = {ext: QPushButton(f"{ext} files") for ext in available_types}
 
-        if dpx_files and mxf_files and mov_files:
+        if len(available_types) > 1:
+            file_desc = ' og '.join(available_types.keys())
             msg = create_file_selection_box(
-                "Fant både .dpx, .mov og .mxf (FILM) filer. Vennligst velg ett av alternativene!",
-                [dpx_button, mov_button, mxf_button]
-            )
-        elif dpx_files and mxf_files:
-            msg = create_file_selection_box(
-                "Både .dpx and .mxf (FILM) filer funnet. Vennligst velg ett av alternativene!",
-                [dpx_button, mxf_button]
-            )
-        elif dpx_files and mov_files:
-            msg = create_file_selection_box(
-                "Både .dpx and .mov files funnet. Vennligst velg ett av alternativene!",
-                [dpx_button, mov_button]
-            )
-        elif mxf_files and mov_files:
-            msg = create_file_selection_box(
-                "Både .mxf (FILM) and .mov files funnet. Vennligst velg ett av alternativene!",
-                [mxf_button, mov_button]
+                f"Fant både {file_desc} filer. Vennligst velg ett av alternativene!",
+                list(buttons.values())
             )
         else:
             msg = None
 
         if msg:
-            msg.exec_()
-            if msg.clickedButton() == dpx_button:
-                self.selected_files = dpx_files
-            elif msg.clickedButton() == mxf_button:
-                if len(mxf_files) > 1:
-                    selected_file = select_file_from_list(mxf_files, "mxf")
-                    if selected_file:
-                        self.selected_files = [selected_file]
-                        self.mappe_input_field.setText(selected_file)
-                else:
-                    self.selected_files = mxf_files
-                    self.mappe_input_field.setText(mxf_files[0])
-            elif msg.clickedButton() == mov_button:
-                if len(mov_files) > 1:
-                    selected_file = select_file_from_list(mov_files, "mov")
-                    if selected_file:
-                        self.selected_files = [selected_file]
-                        self.mappe_input_field.setText(selected_file)
-                else:
-                    self.selected_files = mov_files
-                    self.mappe_input_field.setText(mov_files[0])
+            retval = msg.exec_()
+            for ext, button in buttons.items():
+                if msg.clickedButton() == button:
+                    self.selected_files = available_types[ext]
+                    if len(self.selected_files) == 1:
+                        self.mappe_input_field.setText(self.selected_files[0])
+                    else:
+                        selected_file = select_file_from_list(self.selected_files, ext.lstrip('.'))
+                        if selected_file:
+                            self.selected_files = [selected_file]
+                            self.mappe_input_field.setText(selected_file)
+                    break
+        else:
+            if '.dpx' in available_types:
+                self.selected_files = available_types['.dpx']
+            elif '.mxf' in available_types:
+                self.selected_files = available_types['.mxf']
+                self.mappe_input_field.setText(self.selected_files[0])
+            elif '.mov' in available_types:
+                self.selected_files = available_types['.mov']
+                self.mappe_input_field.setText(self.selected_files[0])
             else:
                 self.selected_files = []
-        elif dpx_files:
-            self.selected_files = dpx_files
-        elif mxf_files:
-            self.selected_files = mxf_files
-            self.mappe_input_field.setText(mxf_files[0])
-        elif mov_files:
-            self.selected_files = mov_files
-            self.mappe_input_field.setText(mov_files[0])
-        else:
-            self.selected_files = []
-            QMessageBox.warning(self, 'Advarsel',
-                                'Ingen .dpx, .mxf (FILM), eller .mov filer funnet i den valgte mappen.')
+                QMessageBox.warning(self, 'Advarsel', 'Ingen .dpx, .mxf (FILM), eller .mov filer funnet i den valgte mappen.')
 
     def check_box_logic(self, knapp):
         """
@@ -579,6 +565,11 @@ class Smelt(QWidget):
         elif fil_input_text == '':
             self.audio_file_path = ''
             self.inkluderLydCheckBox.setChecked(False)
+
+        if self.audio_file_path != '' and not (os.path.isdir(mappe_input_text) | os.path.isfile(mappe_input_text)):
+            if not self.kunLydCheckBox.isChecked():
+                self.kunLydCheckBox.setChecked(True)
+                self.inkluderProresCheckBox.setChecked(False)
 
     def run_smelt(self):
         """
