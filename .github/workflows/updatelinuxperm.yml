@@ -18,6 +18,7 @@ jobs:
       id: get_release_info
       run: |
         LATEST_RELEASE=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" https://api.github.com/repos/${{ github.repository }}/releases/latest)
+        echo "LATEST_RELEASE=$LATEST_RELEASE" >> $GITHUB_ENV
         echo "::set-output name=LATEST_RELEASE::$LATEST_RELEASE"
         echo $LATEST_RELEASE | jq -r '.assets[] | select(.name == "Smelt") | .browser_download_url' > ASSET_URL.txt
         if [ ! -s ASSET_URL.txt ]; then
@@ -41,7 +42,8 @@ jobs:
     - name: Extract release id
       id: extract_release_id
       run: |
-        RELEASE_ID=$(echo "${{ steps.get_release_info.outputs.LATEST_RELEASE }}" | jq -r '.release.id')
+        RELEASE_ID=$(echo "${{ steps.get_release_info.outputs.LATEST_RELEASE }}" | jq -r '.id')
+        echo "RELEASE_ID=$RELEASE_ID" >> $GITHUB_ENV
         echo "::set-output name=RELEASE_ID::$RELEASE_ID"
 
     - name: Check release ID
@@ -61,20 +63,19 @@ jobs:
     - name: Verify executable permissions
       run: ls -l ./Smelt
 
-    - name: Re-upload Linux executable
+    - name: Delete existing asset and re-upload
       run: |
-        # Extract release id
-        RELEASE_ID=$(echo "$LATEST_RELEASE" | jq -r '.id')
-        echo "Extracted RELEASE_ID: $RELEASE_ID"
-        # Delete existing asset
-        ASSET_ID=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" ${{ env.ASSET_URL }} | jq -r '.id')
+        # Extract the asset ID from the latest release
+        ASSET_ID=$(echo "${{ steps.get_release_info.outputs.LATEST_RELEASE }}" | jq -r '.assets[] | select(.name == "Smelt") | .id')
         echo "Extracted ASSET_ID: $ASSET_ID"
+        # Delete the existing asset
         curl -X DELETE -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" https://api.github.com/repos/${{ github.repository }}/releases/assets/$ASSET_ID
         # Re-upload the asset
+        UPLOAD_URL=$(echo "${{ steps.get_release_info.outputs.LATEST_RELEASE }}" | jq -r '.upload_url' | sed 's/{?name,label}//')
         curl -X POST -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
              -H "Content-Type: application/octet-stream" \
              --data-binary @./Smelt \
-             ${{ env.UPLOAD_URL }}?name=Smelt
+             $UPLOAD_URL?name=Smelt
 
     - name: Check artifact permissions after upload
       run: ls -l ./Smelt
