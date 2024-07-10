@@ -59,11 +59,15 @@ jobs:
       run: |
         pyinstaller --onefile --noconsole Smelt.py # replace with your spec file if you have one
 
-
     - name: Build with PyInstaller (Linux)
       if: matrix.os == 'ubuntu-latest'
       run: |
         pyinstaller --onefile Smelt.py # replace with your spec file if you have one
+
+    - name: Create tarball for Linux artifact
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        tar -czvf smelt-executable-linux.tar.gz -C dist Smelt
 
     - name: Upload artifact (Windows)
       if: matrix.os == 'windows-latest'
@@ -77,7 +81,7 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         name: smelt-executable-linux
-        path: dist/Smelt
+        path: smelt-executable-linux.tar.gz
 
   release:
     needs: build
@@ -97,6 +101,10 @@ jobs:
       with:
         name: smelt-executable-linux
         path: ./dist/linux
+
+    - name: Extract Linux tarball
+      run: |
+        tar -xzvf ./dist/linux/smelt-executable-linux.tar.gz -C ./dist/linux
 
     - name: Check if artifact exists (Linux)
       run: |
@@ -153,9 +161,6 @@ jobs:
         asset_path: ./dist/windows/Smelt.exe
         asset_name: Smelt.exe
         asset_content_type: application/octet-stream
-
-    - name: Set executable permission (Linux)
-      run: chmod +x ./dist/linux/Smelt && ls -l ./dist/linux/Smelt
 
     - name: Upload Release Asset (Linux)
       uses: actions/upload-release-asset@v1
