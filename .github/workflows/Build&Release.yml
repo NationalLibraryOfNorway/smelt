@@ -113,7 +113,6 @@ jobs:
       run: chmod +x ./dist/linux/Smelt
 
     - name: Check artifact permissions (Linux)
-      if: matrix.os == 'ubuntu-latest'
       run: ls -l ./dist/linux/Smelt
 
     - name: Get latest release version
