@@ -64,9 +64,10 @@ jobs:
       run: |
         pyinstaller --onefile Smelt.py # replace with your spec file if you have one
 
-    - name: Create tarball for Linux artifact
+    - name: Set executable permission and create tarball for Linux artifact
       if: matrix.os == 'ubuntu-latest'
       run: |
+        chmod +x dist/Smelt
         tar -czvf smelt-executable-linux.tar.gz -C dist Smelt
 
     - name: Upload artifact (Windows)
@@ -102,21 +103,14 @@ jobs:
         name: smelt-executable-linux
         path: ./dist/linux
 
-    - name: Extract Linux tarball
-      run: |
-        tar -xzvf ./dist/linux/smelt-executable-linux.tar.gz -C ./dist/linux
-
     - name: Check if artifact exists (Linux)
       run: |
-        if [ -f "./dist/linux/Smelt" ]; then
+        if [ -f "./dist/linux/smelt-executable-linux.tar.gz" ]; then
           echo "Linux artifact found."
         else
           echo "Linux artifact not found."
           exit 1
         fi
-    
-    - name: Set executable permission (Linux)
-      run: chmod +x ./dist/linux/Smelt && ls -l ./dist/linux/Smelt
 
     - name: Get latest release version
       id: get_latest_release
@@ -168,6 +162,6 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./dist/linux/Smelt
-        asset_name: Smelt
+        asset_path: ./dist/linux/smelt-executable-linux.tar.gz
+        asset_name: smelt-executable-linux.tar.gz
         asset_content_type: application/octet-stream
