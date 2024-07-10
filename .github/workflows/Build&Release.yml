@@ -106,6 +106,9 @@ jobs:
           exit 1
         fi
 
+    - name: Check artifact permissions after (Linux)
+      run: ls -l ./dist/linux/Smelt
+
     - name: Set executable permission (Linux)
       run: chmod +x ./dist/linux/Smelt
 
