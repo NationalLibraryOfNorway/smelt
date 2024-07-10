@@ -97,6 +97,15 @@ jobs:
         name: smelt-executable-linux
         path: ./dist/linux
 
+    - name: Check if artifact exists (Linux)
+      run: |
+        if [ -f "./dist/linux/Smelt" ]; then
+          echo "Linux artifact found."
+        else
+          echo "Linux artifact not found."
+          exit 1
+        fi
+
     - name: Set executable permission (Linux)
       run: chmod +x ./dist/linux/Smelt
 
