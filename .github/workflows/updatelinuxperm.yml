@@ -35,6 +35,22 @@ jobs:
         echo "Extracted ASSET_URL: $ASSET_URL"
         echo "Extracted UPLOAD_URL: $UPLOAD_URL"
 
+    - name: Print JSON response
+      run: echo "${{ steps.get_release_info.outputs.LATEST_RELEASE }}"
+
+    - name: Extract release id
+      id: extract_release_id
+      run: |
+        RELEASE_ID=$(echo "${{ steps.get_release_info.outputs.LATEST_RELEASE }}" | jq -r '.id')
+        echo "::set-output name=RELEASE_ID::$RELEASE_ID"
+
+    - name: Check release ID
+      run: |
+        if [ -z "${{ steps.extract_release_id.outputs.RELEASE_ID }}" ]; then
+          echo "Error: Could not extract release ID" >&2
+          exit 1
+        fi
+
     - name: Download Linux executable
       run: |
         curl -L -H "Accept: application/octet-stream" -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" ${{ env.ASSET_URL }} -o ./Smelt
