@@ -105,15 +105,9 @@ jobs:
           echo "Linux artifact not found."
           exit 1
         fi
-
-    - name: Check artifact permissions after (Linux)
-      run: ls -l ./dist/linux/Smelt
-
+    
     - name: Set executable permission (Linux)
-      run: chmod +x ./dist/linux/Smelt
-
-    - name: Check artifact permissions (Linux)
-      run: ls -l ./dist/linux/Smelt
+      run: chmod +x ./dist/linux/Smelt && ls -l ./dist/linux/Smelt
 
     - name: Get latest release version
       id: get_latest_release
@@ -158,6 +152,9 @@ jobs:
         asset_path: ./dist/windows/Smelt.exe
         asset_name: Smelt.exe
         asset_content_type: application/octet-stream
+
+    - name: Set executable permission (Linux)
+      run: chmod +x ./dist/linux/Smelt && ls -l ./dist/linux/Smelt
 
     - name: Upload Release Asset (Linux)
       uses: actions/upload-release-asset@v1
