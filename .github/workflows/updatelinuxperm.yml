@@ -30,6 +30,11 @@ jobs:
         UPLOAD_URL=$(cat UPLOAD_URL.txt)
         echo "UPLOAD_URL=$UPLOAD_URL" >> $GITHUB_ENV
 
+    - name: Output extracted values
+      run: |
+        echo "Extracted ASSET_URL: $ASSET_URL"
+        echo "Extracted UPLOAD_URL: $UPLOAD_URL"
+
     - name: Download Linux executable
       run: |
         curl -L -H "Accept: application/octet-stream" -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" ${{ env.ASSET_URL }} -o ./Smelt
@@ -37,12 +42,17 @@ jobs:
     - name: Update permissions
       run: chmod +x ./Smelt
 
+    - name: Verify executable permissions
+      run: ls -l ./Smelt
+
     - name: Re-upload Linux executable
       run: |
         # Extract release id
-        RELEASE_ID=$(echo $LATEST_RELEASE | jq -r '.id')
+        RELEASE_ID=$(echo "$LATEST_RELEASE" | jq -r '.id')
+        echo "Extracted RELEASE_ID: $RELEASE_ID"
         # Delete existing asset
         ASSET_ID=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" ${{ env.ASSET_URL }} | jq -r '.id')
+        echo "Extracted ASSET_ID: $ASSET_ID"
         curl -X DELETE -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" https://api.github.com/repos/${{ github.repository }}/releases/assets/$ASSET_ID
         # Re-upload the asset
         curl -X POST -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
