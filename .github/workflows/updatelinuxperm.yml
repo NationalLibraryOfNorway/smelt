@@ -14,12 +14,16 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v2
 
-    - name: Get release information
+    - name: Get latest release information
       id: get_release_info
       run: |
-        LATEST_RELEASE=$(curl -s https://api.github.com/repos/${{ github.repository }}/releases/latest)
+        LATEST_RELEASE=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" https://api.github.com/repos/${{ github.repository }}/releases/latest)
         echo "LATEST_RELEASE=$LATEST_RELEASE" >> $GITHUB_ENV
         ASSET_URL=$(echo $LATEST_RELEASE | jq -r '.assets[] | select(.name == "Smelt") | .url')
+        if [ -z "$ASSET_URL" ]; then
+          echo "Error: Could not find the asset URL for Smelt" >&2
+          exit 1
+        fi
         echo "ASSET_URL=$ASSET_URL" >> $GITHUB_ENV
         UPLOAD_URL=$(echo $LATEST_RELEASE | jq -r '.upload_url' | sed 's/{?name,label}//')
         echo "UPLOAD_URL=$UPLOAD_URL" >> $GITHUB_ENV
@@ -33,7 +37,12 @@ jobs:
 
     - name: Re-upload Linux executable
       run: |
-        curl -X DELETE -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" ${{ env.ASSET_URL }}
+        # Extract release id
+        RELEASE_ID=$(echo $LATEST_RELEASE | jq -r '.id')
+        # Delete existing asset
+        ASSET_ID=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" ${{ env.ASSET_URL }} | jq -r '.id')
+        curl -X DELETE -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" https://api.github.com/repos/${{ github.repository }}/releases/assets/$ASSET_ID
+        # Re-upload the asset
         curl -X POST -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
              -H "Content-Type: application/octet-stream" \
              --data-binary @./Smelt \
