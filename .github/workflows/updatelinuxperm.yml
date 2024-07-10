@@ -19,13 +19,15 @@ jobs:
       run: |
         LATEST_RELEASE=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" https://api.github.com/repos/${{ github.repository }}/releases/latest)
         echo "LATEST_RELEASE=$LATEST_RELEASE" >> $GITHUB_ENV
-        ASSET_URL=$(echo $LATEST_RELEASE | jq -r '.assets[] | select(.name == "Smelt") | .url')
-        if [ -z "$ASSET_URL" ]; then
+        echo $LATEST_RELEASE | jq -r '.assets[] | select(.name == "Smelt") | .url' > ASSET_URL.txt
+        if [ ! -s ASSET_URL.txt ]; then
           echo "Error: Could not find the asset URL for Smelt" >&2
           exit 1
         fi
+        ASSET_URL=$(cat ASSET_URL.txt)
         echo "ASSET_URL=$ASSET_URL" >> $GITHUB_ENV
-        UPLOAD_URL=$(echo $LATEST_RELEASE | jq -r '.upload_url' | sed 's/{?name,label}//')
+        echo $LATEST_RELEASE | jq -r '.upload_url' | sed 's/{?name,label}//' > UPLOAD_URL.txt
+        UPLOAD_URL=$(cat UPLOAD_URL.txt)
         echo "UPLOAD_URL=$UPLOAD_URL" >> $GITHUB_ENV
 
     - name: Download Linux executable
