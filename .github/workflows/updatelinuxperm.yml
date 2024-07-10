@@ -18,6 +18,7 @@ jobs:
       id: get_release_info
       run: |
         LATEST_RELEASE=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" https://api.github.com/repos/${{ github.repository }}/releases/latest)
+        echo "LATEST_RELEASE: $LATEST_RELEASE"
         if echo "$LATEST_RELEASE" | jq empty; then
           echo "::set-output name=LATEST_RELEASE::$LATEST_RELEASE"
         else
@@ -72,10 +73,8 @@ jobs:
 
     - name: Re-upload Linux executable
       run: |
-        # Extract release id
         RELEASE_ID=${{ steps.extract_release_id.outputs.RELEASE_ID }}
         echo "Extracted RELEASE_ID: $RELEASE_ID"
-        # Delete existing asset
         ASSET_ID=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" https://api.github.com/repos/${{ github.repository }}/releases/assets/${{ env.ASSET_URL }} | jq -r '.id')
         if [ -z "$ASSET_ID" ]; then
           echo "Error: Could not find the asset ID" >&2
@@ -83,7 +82,6 @@ jobs:
         fi
         echo "Extracted ASSET_ID: $ASSET_ID"
         curl -X DELETE -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" https://api.github.com/repos/${{ github.repository }}/releases/assets/$ASSET_ID
-        # Re-upload the asset
         curl -X POST -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
              -H "Content-Type: application/octet-stream" \
              --data-binary @./Smelt \
