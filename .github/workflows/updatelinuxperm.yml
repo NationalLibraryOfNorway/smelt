@@ -41,7 +41,7 @@ jobs:
     - name: Extract release id
       id: extract_release_id
       run: |
-        RELEASE_ID=$(echo "${{ steps.get_release_info.outputs.LATEST_RELEASE }}" | jq -r '.id')
+        RELEASE_ID=$(echo "${{ steps.get_release_info.outputs.LATEST_RELEASE }}" | jq -r '.release.id')
         echo "::set-output name=RELEASE_ID::$RELEASE_ID"
 
     - name: Check release ID
