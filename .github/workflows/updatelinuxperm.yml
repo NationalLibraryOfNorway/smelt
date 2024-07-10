@@ -1,0 +1,43 @@
+name: Update Linux Executable Permissions
+
+on:
+  workflow_run:
+    workflows: ["Build with PyInstaller and Create Release"]
+    types:
+      - completed
+
+jobs:
+  update-permissions:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Get release information
+      id: get_release_info
+      run: |
+        LATEST_RELEASE=$(curl -s https://api.github.com/repos/${{ github.repository }}/releases/latest)
+        echo "LATEST_RELEASE=$LATEST_RELEASE" >> $GITHUB_ENV
+        ASSET_URL=$(echo $LATEST_RELEASE | jq -r '.assets[] | select(.name == "Smelt") | .url')
+        echo "ASSET_URL=$ASSET_URL" >> $GITHUB_ENV
+        UPLOAD_URL=$(echo $LATEST_RELEASE | jq -r '.upload_url' | sed 's/{?name,label}//')
+        echo "UPLOAD_URL=$UPLOAD_URL" >> $GITHUB_ENV
+
+    - name: Download Linux executable
+      run: |
+        curl -L -H "Accept: application/octet-stream" -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" ${{ env.ASSET_URL }} -o ./Smelt
+
+    - name: Update permissions
+      run: chmod +x ./Smelt
+
+    - name: Re-upload Linux executable
+      run: |
+        curl -X DELETE -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" ${{ env.ASSET_URL }}
+        curl -X POST -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+             -H "Content-Type: application/octet-stream" \
+             --data-binary @./Smelt \
+             ${{ env.UPLOAD_URL }}?name=Smelt
+
+    - name: Check artifact permissions after upload
+      run: ls -l ./Smelt
