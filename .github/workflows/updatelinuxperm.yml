@@ -18,23 +18,34 @@ jobs:
       id: get_release_info
       run: |
         LATEST_RELEASE=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" https://api.github.com/repos/${{ github.repository }}/releases/latest)
-        echo "LATEST_RELEASE=$LATEST_RELEASE" >> $GITHUB_ENV
-        echo "::set-output name=LATEST_RELEASE::$LATEST_RELEASE"
-        echo $LATEST_RELEASE | jq -r '.assets[] | select(.name == "Smelt") | .browser_download_url' > ASSET_URL.txt
-        if [ ! -s ASSET_URL.txt ]; then
+        if echo "$LATEST_RELEASE" | jq empty; then
+          echo "::set-output name=LATEST_RELEASE::$LATEST_RELEASE"
+        else
+          echo "Error: Received invalid JSON response" >&2
+          exit 1
+        fi
+
+    - name: Extract asset and upload URLs
+      id: extract_urls
+      run: |
+        ASSET_URL=$(echo "${{ steps.get_release_info.outputs.LATEST_RELEASE }}" | jq -r '.assets[] | select(.name == "Smelt") | .browser_download_url')
+        if [ -z "$ASSET_URL" ]; then
           echo "Error: Could not find the asset URL for Smelt" >&2
           exit 1
         fi
-        ASSET_URL=$(cat ASSET_URL.txt)
         echo "ASSET_URL=$ASSET_URL" >> $GITHUB_ENV
-        echo $LATEST_RELEASE | jq -r '.html_url' | sed 's/{?name,label}//' > UPLOAD_URL.txt
-        UPLOAD_URL=$(cat UPLOAD_URL.txt)
+
+        UPLOAD_URL=$(echo "${{ steps.get_release_info.outputs.LATEST_RELEASE }}" | jq -r '.upload_url' | sed 's/{?name,label}//')
+        if [ -z "$UPLOAD_URL" ]; then
+          echo "Error: Could not find the upload URL" >&2
+          exit 1
+        fi
         echo "UPLOAD_URL=$UPLOAD_URL" >> $GITHUB_ENV
 
     - name: Output extracted values
       run: |
-        echo "Extracted ASSET_URL: $ASSET_URL"
-        echo "Extracted UPLOAD_URL: $UPLOAD_URL"
+        echo "Extracted ASSET_URL: ${{ env.ASSET_URL }}"
+        echo "Extracted UPLOAD_URL: ${{ env.UPLOAD_URL }}"
 
     - name: Print JSON response
       run: echo "${{ steps.get_release_info.outputs.LATEST_RELEASE }}"
@@ -43,15 +54,11 @@ jobs:
       id: extract_release_id
       run: |
         RELEASE_ID=$(echo "${{ steps.get_release_info.outputs.LATEST_RELEASE }}" | jq -r '.id')
-        echo "RELEASE_ID=$RELEASE_ID" >> $GITHUB_ENV
-        echo "::set-output name=RELEASE_ID::$RELEASE_ID"
-
-    - name: Check release ID
-      run: |
-        if [ -z "${{ steps.extract_release_id.outputs.RELEASE_ID }}" ]; then
+        if [ -z "$RELEASE_ID" ]; then
           echo "Error: Could not extract release ID" >&2
           exit 1
         fi
+        echo "::set-output name=RELEASE_ID::$RELEASE_ID"
 
     - name: Download Linux executable
       run: |
@@ -63,19 +70,24 @@ jobs:
     - name: Verify executable permissions
       run: ls -l ./Smelt
 
-    - name: Delete existing asset and re-upload
+    - name: Re-upload Linux executable
       run: |
-        # Extract the asset ID from the latest release
-        ASSET_ID=$(echo "${{ steps.get_release_info.outputs.LATEST_RELEASE }}" | jq -r '.assets[] | select(.name == "Smelt") | .id')
+        # Extract release id
+        RELEASE_ID=${{ steps.extract_release_id.outputs.RELEASE_ID }}
+        echo "Extracted RELEASE_ID: $RELEASE_ID"
+        # Delete existing asset
+        ASSET_ID=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" https://api.github.com/repos/${{ github.repository }}/releases/assets/${{ env.ASSET_URL }} | jq -r '.id')
+        if [ -z "$ASSET_ID" ]; then
+          echo "Error: Could not find the asset ID" >&2
+          exit 1
+        fi
         echo "Extracted ASSET_ID: $ASSET_ID"
-        # Delete the existing asset
         curl -X DELETE -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" https://api.github.com/repos/${{ github.repository }}/releases/assets/$ASSET_ID
         # Re-upload the asset
-        UPLOAD_URL=$(echo "${{ steps.get_release_info.outputs.LATEST_RELEASE }}" | jq -r '.upload_url' | sed 's/{?name,label}//')
         curl -X POST -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
              -H "Content-Type: application/octet-stream" \
              --data-binary @./Smelt \
-             $UPLOAD_URL?name=Smelt
+             ${{ env.UPLOAD_URL }}?name=Smelt
 
     - name: Check artifact permissions after upload
       run: ls -l ./Smelt
