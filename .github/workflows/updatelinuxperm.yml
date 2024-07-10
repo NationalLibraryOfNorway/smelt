@@ -39,7 +39,7 @@ jobs:
       run: |
         curl -L -H "Accept: application/octet-stream" -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" ${{ env.ASSET_URL }} -o ./Smelt
 
-    - name: Update permission
+    - name: Update permissions
       run: chmod +x ./Smelt
 
     - name: Verify executable permissions
