@@ -19,7 +19,6 @@ jobs:
       run: |
         LATEST_RELEASE=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" https://api.github.com/repos/${{ github.repository }}/releases/latest)
         echo "LATEST_RELEASE=$LATEST_RELEASE" >> $GITHUB_ENV
-        echo "::set-output name=LATEST_RELEASE::$LATEST_RELEASE"
         echo "LATEST_RELEASE: $LATEST_RELEASE"  # Add this line for debugging
         echo $LATEST_RELEASE | jq -r '.assets[] | select(.name == "Smelt") | .browser_download_url' > ASSET_URL.txt
         if [ ! -s ASSET_URL.txt ]; then
@@ -47,7 +46,6 @@ jobs:
       run: |
         RELEASE_ID=$(echo "${{ steps.get_release_info.outputs.LATEST_RELEASE }}" | jq -r '.id')
         echo "RELEASE_ID=$RELEASE_ID" >> $GITHUB_ENV
-        echo "::set-output name=RELEASE_ID::$RELEASE_ID"
         echo "RELEASE_ID: $RELEASE_ID"  # Add this line for debugging
 
     - name: Check release ID
