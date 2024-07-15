@@ -22,6 +22,7 @@ import threading
 import time
 
 from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import *
 
 
@@ -349,6 +350,7 @@ class Smelt(QWidget):
                     border: 1px solid #5A5A5A;
                 }
             """)
+            self.setWindowIcon(QIcon('resources/icon.ico'))
         else:
             self.setStyleSheet("background-color: #2B2B2B; color: white;")
 
