@@ -3,10 +3,10 @@
 block_cipher = None
 
 a = Analysis(
-    ['Smelt.py'],
-    pathex=['.'],
+    ['../Smelt.py'],  # Corrected path to the script, relative to the spec file location
+    pathex=['..'],  # Path to the project root
     binaries=[],
-    datas=[('resources/icon.ico', 'icon.ico')],  # Corrected path to icon
+    datas=[('icon.ico', 'icon.ico')],  # Assuming the icon is in the same directory as the spec file
     hiddenimports=[],
     hookspath=[],
     runtime_hooks=[],
@@ -28,8 +28,8 @@ exe = EXE(
     strip=False,
     upx=True,
     console=False,
-    icon='resources/icon.ico',  # Corrected path to icon
-    version='resources/version.txt'  # Corrected path to version file
+    icon='icon.ico',  # Path relative to the spec file
+    version='version.txt'  # Path relative to the spec file
 )
 
 coll = COLLECT(
