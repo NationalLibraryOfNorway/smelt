@@ -24,7 +24,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
-        python-version: '3.12.3' # specify the Python version you need
+        python-version: '3.12.4' # specify the Python version you need
 
     - name: Install dependencies (Windows)
       if: matrix.os == 'windows-latest'
@@ -76,7 +76,7 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         name: smelt-executable-windows
-        path: dist/Smelt.exe
+        path: dist/Smelt/Smelt.exe
 
     - name: Upload artifact (Linux)
       if: matrix.os == 'ubuntu-latest'
