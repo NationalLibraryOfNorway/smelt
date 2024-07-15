@@ -311,32 +311,42 @@ class Smelt(QWidget):
             self.setStyleSheet("""
                 QWidget {
                     background-color: #2B2B2B; 
-                    color: #000000; 
+                    color: white; 
                     font-family: 'Segoe UI'; 
                     font-size: 10pt;
                 }
                 QPushButton {
-                    background-color: #E0E0E0; 
-                    border: 1px solid #A0A0A0;
+                    background-color: #3A3A3A; 
+                    color: white; 
+                    border: 1px solid #5A5A5A;
                     padding: 5px;
                 }
                 QLineEdit {
-                    border: 1px solid #A0A0A0;
+                    background-color: #3A3A3A;
+                    color: white;
+                    border: 1px solid #5A5A5A;
                     padding: 3px;
                 }
                 QTextEdit {
-                    border: 1px solid #A0A0A0;
+                    background-color: #3A3A3A;
+                    color: white;
+                    border: 1px solid #5A5A5A;
                     padding: 5px;
-                    background-color: #FFFFFF;
                 }
                 QLabel {
                     padding: 2px;
                 }
                 QProgressBar {
-                    border: 1px solid #A0A0A0;
+                    border: 1px solid #5A5A5A;
                     text-align: center;
-                    background: #FFFFFF;
+                    background: #3A3A3A;
+                    color: white;
                     height: 15px;
+                }
+                QComboBox {
+                    background-color: #3A3A3A;
+                    color: white;
+                    border: 1px solid #5A5A5A;
                 }
             """)
         else:
