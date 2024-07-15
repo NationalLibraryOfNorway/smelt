@@ -307,7 +307,40 @@ class Smelt(QWidget):
         """
         Set the styling of the UI elements.
         """
-        self.setStyleSheet("background-color: #2B2B2B; color: white;")
+        if platform.system() == 'Windows':
+            self.setStyleSheet("""
+                QWidget {
+                    background-color: #2B2B2B; 
+                    color: #000000; 
+                    font-family: 'Segoe UI'; 
+                    font-size: 10pt;
+                }
+                QPushButton {
+                    background-color: #E0E0E0; 
+                    border: 1px solid #A0A0A0;
+                    padding: 5px;
+                }
+                QLineEdit {
+                    border: 1px solid #A0A0A0;
+                    padding: 3px;
+                }
+                QTextEdit {
+                    border: 1px solid #A0A0A0;
+                    padding: 5px;
+                    background-color: #FFFFFF;
+                }
+                QLabel {
+                    padding: 2px;
+                }
+                QProgressBar {
+                    border: 1px solid #A0A0A0;
+                    text-align: center;
+                    background: #FFFFFF;
+                    height: 15px;
+                }
+            """)
+        else:
+            self.setStyleSheet("background-color: #2B2B2B; color: white;")
 
         self.fil_input_field.setStyleSheet("border: 1px solid gray;")
         self.mappe_input_field.setStyleSheet('border: 1px solid gray;')
