@@ -6,7 +6,7 @@ a = Analysis(
     ['Smelt.py'],
     pathex=['.'],
     binaries=[],
-    datas=[('icon.ico', 'icon.ico')],
+    datas=[('resources/icon.ico', 'icon.ico')],  # Corrected path to icon
     hiddenimports=[],
     hookspath=[],
     runtime_hooks=[],
@@ -28,8 +28,8 @@ exe = EXE(
     strip=False,
     upx=True,
     console=False,
-    icon='assets/icon.ico',
-    version='version.txt'
+    icon='resources/icon.ico',  # Corrected path to icon
+    version='resources/version.txt'  # Corrected path to version file
 )
 
 coll = COLLECT(
