@@ -350,7 +350,7 @@ class Smelt(QWidget):
                     border: 1px solid #5A5A5A;
                 }
             """)
-            self.setWindowIcon(QIcon('resources/icon.ico'))
+            self.setWindowIcon(QIcon(':/icon.ico'))
         else:
             self.setStyleSheet("background-color: #2B2B2B; color: white;")
 
