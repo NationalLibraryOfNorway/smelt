@@ -6,8 +6,8 @@
 
 VSVersionInfo(
   ffi=FixedFileInfo(
-    filevers=(0, 9, 0),
-    prodvers=(0, 9, 0),
+    filevers=(1, 0, 0, 1),
+    prodvers=(1, 0, 0, 1),
     mask=0x3f,
     flags=0x0,
     OS=0x4,
@@ -19,17 +19,17 @@ VSVersionInfo(
     StringFileInfo(
       [
         StringTable(
-          u'040904B0',
-          [StringStruct(u'CompanyName', u'Nasjonalbiblioteket'),
+          u'04140800',  # Norwegian Bokmål (0414) and Unicode (0800)
+          [StringStruct(u'CompanyName', u'Nasjonalbiblioteket IT'),
            StringStruct(u'FileDescription', u'Smelt Applikasjon'),
-           StringStruct(u'FileVersion', u'0.9.0'),
+           StringStruct(u'FileVersion', u'1.0.0.1'),
            StringStruct(u'InternalName', u'Smelt'),
-           StringStruct(u'LegalCopyright', u'(C) 2024 Nasjonalbiblioteket'),
+           StringStruct(u'LegalCopyright', u'(C) 2024 Emil Molberg'),
            StringStruct(u'OriginalFilename', u'Smelt.exe'),
            StringStruct(u'ProductName', u'Smelt'),
-           StringStruct(u'ProductVersion', u'0.9.0')])
+           StringStruct(u'ProductVersion', u'1.0.0.1')])
       ]
     ),
-    VarFileInfo([VarStruct(u'Translation', [1033, 1200])])
+    VarFileInfo([VarStruct(u'Translation', [0x0414, 1200])])
   ]
 )
