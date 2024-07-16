@@ -1,41 +1,40 @@
 # -*- mode: python ; coding: utf-8 -*-
 
-block_cipher = None
 
 a = Analysis(
-    ['../Smelt.py', '../resources/resources_rc.py'],  # Include the main script and the resources file
-    pathex=['..'],  # Path to the project root
+    ['..Smelt.py', '../resources/resources_rc.py'],
+    pathex=['..'],
     binaries=[],
-    datas=[('../resources/icon.ico', 'icon.ico')],  # Correct path to icon
-    hiddenimports=[
-        'PyQt5.QtCore',
-        'PyQt5.QtGui',
-        'PyQt5.QtWidgets',
-        'PyQt5.QtNetwork',
-        'PyQt5.QtPrintSupport',
-        'sip',  # Ensure sip is included
-    ],
-    hookspath=['resources/hooks'],  # Path to additional hooks if any
+    datas=[('../resources/icon.ico', 'icon.ico')],
+    hiddenimports=[],
+    hookspath=[],
+    hooksconfig={},
     runtime_hooks=[],
     excludes=[],
-    win_no_prefer_redirects=False,
-    win_private_assemblies=False,
-    cipher=block_cipher,
+    noarchive=False,
+    optimize=0,
 )
-
-pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
+pyz = PYZ(a.pure)
 
 exe = EXE(
     pyz,
     a.scripts,
+    a.binaries,
+    a.datas,
     [],
-    exclude_binaries=True,
     name='Smelt',
-    debug=False,  # Disable debugging for the final build
+    debug=False,
     bootloader_ignore_signals=False,
     strip=False,
     upx=True,
-    console=False,
-    icon='../resources/icon.ico',  # Correct path to icon
-    version='../resources/version.txt'  # Correct path to version file
+    upx_exclude=[],
+    runtime_tmpdir=None,
+    console=True,
+    disable_windowed_traceback=False,
+    argv_emulation=False,
+    target_arch=None,
+    codesign_identity=None,
+    entitlements_file=None,
+    icon='../resources/icon.ico',
+    version='../resources/version.txt'
 )
