@@ -13,7 +13,7 @@ a = Analysis(
         'PyQt5.QtWidgets',
         'PyQt5.QtNetwork',
         'PyQt5.QtPrintSupport',
-        'sip'
+        'sip',  # Ensure sip is included
     ],
     hookspath=['resources/hooks'],  # Path to additional hooks if any
     runtime_hooks=[],
@@ -29,7 +29,7 @@ exe = EXE(
     pyz,
     a.scripts,
     [],
-    exclude_binaries=False,
+    exclude_binaries=True,
     name='Smelt',
     debug=False,  # Disable debugging for the final build
     bootloader_ignore_signals=False,
@@ -38,12 +38,4 @@ exe = EXE(
     console=False,
     icon='../resources/icon.ico',  # Correct path to icon
     version='../resources/version.txt'  # Correct path to version file
-)
-
-app = BUNDLE(
-    exe,
-    name='Smelt',
-    icon='../resources/icon.ico',  # Correct path to icon
-    version='../resources/version.txt',  # Correct path to version file
-    bundle_identifier=None
 )
