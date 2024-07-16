@@ -59,8 +59,8 @@ jobs:
       if: matrix.os == 'windows-latest'
       run: |
         pyinstaller resources/Smelt.spec  # Use the spec file
-        ls -al dist  # List contents of dist directory for debugging
-        ls -al build  # List contents of build directory for debugging
+        Get-ChildItem -Path dist -Recurse  # List contents of dist directory for debugging
+        Get-ChildItem -Path build -Recurse  # List contents of build directory for debugging
 
     - name: Build with PyInstaller (Linux)
       if: matrix.os == 'ubuntu-latest'
@@ -79,7 +79,7 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         name: smelt-executable-windows
-        path: dist/Smelt/Smelt.exe  # Adjusted path based on build output
+        path: dist/Smelt.exe  # Adjusted path based on build output
 
     - name: Upload artifact (Linux)
       if: matrix.os == 'ubuntu-latest'
@@ -144,7 +144,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         tag_name: ${{ env.NEW_VERSION }}
-        release_name: ${{ env.NEW_VERSION }}-Beta-pre Release
+        release_name: ${{ env.NEW_VERSION }}-Beta Release
         body: |
           Automatic release from GitHub Actions.
         draft: true
