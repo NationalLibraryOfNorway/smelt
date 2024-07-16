@@ -19,7 +19,7 @@ VSVersionInfo(
     StringFileInfo(
       [
         StringTable(
-          u'04140800',  # Norwegian Bokmål (0414) and Unicode (0800)
+          u'040904B0',
           [StringStruct(u'CompanyName', u'Nasjonalbiblioteket'),
            StringStruct(u'FileDescription', u'Smelt Applikasjon'),
            StringStruct(u'FileVersion', u'0.9.0.0'),
