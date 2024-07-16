@@ -79,7 +79,7 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         name: smelt-executable-windows
-        path: dist/Smelt.exe  # Adjusted path based on build output
+        path: dist/Smelt/Smelt.exe  # Adjusted path based on build output
 
     - name: Upload artifact (Linux)
       if: matrix.os == 'ubuntu-latest'
