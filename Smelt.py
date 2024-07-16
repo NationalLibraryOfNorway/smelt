@@ -12,6 +12,7 @@ Usage:
 
 """
 import glob
+import platform
 import queue
 import re
 import subprocess
@@ -20,7 +21,17 @@ import os
 import threading
 import time
 
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import *
+if platform.system() == 'Windows':
+    import resources_rc
+
+
+# Enable high DPI scaling
+if hasattr(QApplication, 'setAttribute'):
+    QApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
+    QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps)
 
 
 def create_file_selection_box(text, buttons):
@@ -299,6 +310,53 @@ class Smelt(QWidget):
         """
         Set the styling of the UI elements.
         """
+        if platform.system() == 'Windows':
+            self.setStyleSheet("""
+                QWidget {
+                    background-color: #2B2B2B; 
+                    color: white; 
+                    font-family: 'Segoe UI'; 
+                    font-size: 10pt;
+                }
+                QPushButton {
+                    background-color: #3A3A3A; 
+                    color: white; 
+                    border: 1px solid #5A5A5A;
+                    padding: 5px;
+                }
+                QLineEdit {
+                    background-color: #3A3A3A;
+                    color: white;
+                    border: 1px solid #5A5A5A;
+                    padding: 3px;
+                }
+                QTextEdit {
+                    background-color: #3A3A3A;
+                    color: white;
+                    border: 1px solid #5A5A5A;
+                    padding: 5px;
+                }
+                QLabel {
+                    padding: 2px;
+                }
+                QProgressBar {
+                    border: 1px solid #5A5A5A;
+                    text-align: center;
+                    background: #3A3A3A;
+                    color: white;
+                    height: 15px;
+                }
+                QComboBox {
+                    background-color: #3A3A3A;
+                    color: white;
+                    border: 1px solid #5A5A5A;
+                }
+            """)
+            self.setWindowIcon(QIcon('resources/icon.ico'))
+            self.setWindowIcon(QIcon(':/icon.ico'))
+        else:
+            self.setStyleSheet("background-color: #2B2B2B; color: white;")
+
         self.fil_input_field.setStyleSheet("border: 1px solid gray;")
         self.mappe_input_field.setStyleSheet('border: 1px solid gray;')
         self.setStyleSheet("background-color: #2B2B2B; color: white;")
@@ -986,6 +1044,7 @@ class Smelt(QWidget):
 
 
 app = QApplication(sys.argv)
+app.setStyle('Breeze')
 
 window = Smelt()
 window.show()
