@@ -15,7 +15,7 @@ a = Analysis(
         'PyQt5.QtPrintSupport',
         'sip'
     ],
-    hookspath=[],
+    hookspath=['resources/hooks'],  # Path to additional hooks if any
     runtime_hooks=[],
     excludes=[],
     win_no_prefer_redirects=False,
@@ -29,7 +29,7 @@ exe = EXE(
     pyz,
     a.scripts,
     [],
-    exclude_binaries=True,
+    exclude_binaries=False,
     name='Smelt',
     debug=False,  # Disable debugging for the final build
     bootloader_ignore_signals=False,
@@ -37,21 +37,11 @@ exe = EXE(
     upx=True,
     console=False,
     icon='../resources/icon.ico',  # Correct path to icon
-)
-
-coll = COLLECT(
-    exe,
-    a.binaries,
-    a.zipfiles,
-    a.datas,
-    strip=False,
-    upx=True,
-    upx_exclude=[],
-    name='Smelt'
+    version='../resources/version.txt'  # Correct path to version file
 )
 
 app = BUNDLE(
-    coll,
+    exe,
     name='Smelt',
     icon='../resources/icon.ico',  # Correct path to icon
     version='../resources/version.txt',  # Correct path to version file
