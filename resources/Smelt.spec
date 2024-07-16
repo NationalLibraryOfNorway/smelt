@@ -36,13 +36,5 @@ exe = EXE(
     codesign_identity=None,
     entitlements_file=None,
     icon=['resources/icon.ico'],
-    version={
-        'FileDescription': 'Smelt Application',
-        'FileVersion': '1.0.0',
-        'ProductVersion': '1.0.0',
-        'CompanyName': 'Nasjonalbiblioteket',
-        'LegalCopyright': 'Nasjonalbiblioteket',
-        'OriginalFilename': 'Smelt.exe',
-        'ProductName': 'Smelt'
-    }
+    version=['resources/version.txt']
 )
