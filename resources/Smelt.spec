@@ -6,8 +6,13 @@ a = Analysis(
     ['../Smelt.py'],  # Corrected path to the script, relative to the spec file location
     pathex=['..'],  # Path to the project root
     binaries=[],
-    datas=[('icon.ico', 'icon.ico')],  # Assuming the icon is in the same directory as the spec file
-    hiddenimports=[],
+    datas=[('resources/icon.ico', 'icon.ico')],  # Corrected path to icon
+    hiddenimports=[
+        'PyQt5.QtCore',
+        'PyQt5.QtGui',
+        'PyQt5.QtWidgets',
+        'sip'
+    ],  # Add any other hidden imports if necessary
     hookspath=[],
     runtime_hooks=[],
     excludes=[],
@@ -23,13 +28,13 @@ exe = EXE(
     [],
     exclude_binaries=True,
     name='Smelt',
-    debug=False,
+    debug=True,  # Enable debugging
     bootloader_ignore_signals=False,
     strip=False,
     upx=True,
     console=False,
-    icon='icon.ico',  # Path relative to the spec file
-    version='version.txt'  # Path relative to the spec file
+    icon='resources/icon.ico',  # Corrected path to icon
+    version='resources/version.txt'  # Corrected path to version file
 )
 
 coll = COLLECT(
