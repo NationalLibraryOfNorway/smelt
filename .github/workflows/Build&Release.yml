@@ -58,7 +58,7 @@ jobs:
     - name: Build with PyInstaller (Windows)
       if: matrix.os == 'windows-latest'
       run: |
-        pyinstaller --onefile --noconsole Smelt.py # replace with your spec file if you have one
+        pyinstaller resources/Smelt.spec # replace with your spec file if you have one
 
     - name: Build with PyInstaller (Linux)
       if: matrix.os == 'ubuntu-latest'
@@ -76,7 +76,7 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         name: smelt-executable-windows
-        path: dist/Smelt.exe
+        path: dist/Smelt/Smelt.exe
 
     - name: Upload artifact (Linux)
       if: matrix.os == 'ubuntu-latest'

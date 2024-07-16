@@ -24,6 +24,7 @@ import time
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import *
+import resources_rc
 
 
 # Enable high DPI scaling
@@ -350,7 +351,11 @@ class Smelt(QWidget):
                     border: 1px solid #5A5A5A;
                 }
             """)
+<<<<<<< HEAD
             self.setWindowIcon(QIcon('resources/icon.ico'))
+=======
+            self.setWindowIcon(QIcon(':/icon.ico'))
+>>>>>>> 7d0a792a894fd6e6651b5c489e80657cd818a54a
         else:
             self.setStyleSheet("background-color: #2B2B2B; color: white;")
 
