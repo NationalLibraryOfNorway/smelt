@@ -2,7 +2,7 @@
 
 
 a = Analysis(
-    ['..Smelt.py', '../resources/resources_rc.py'],
+    ['../Smelt.py', '../resources/resources_rc.py'],
     pathex=['..'],
     binaries=[],
     datas=[('../resources/icon.ico', 'icon.ico')],
