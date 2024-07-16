@@ -20,14 +20,14 @@ VSVersionInfo(
       [
         StringTable(
           u'040904B0',
-          [StringStruct(u'CompanyName', u'Nasjonalbiblioteket IT'),
+          [StringStruct(u'CompanyName', u'Nasjonalbiblioteket'),
            StringStruct(u'FileDescription', u'Smelt Applikasjon'),
-           StringStruct(u'FileVersion', u'1.0.0.1'),
+           StringStruct(u'FileVersion', u'1.0.0'),
            StringStruct(u'InternalName', u'Smelt'),
-           StringStruct(u'LegalCopyright', u'(C) 2024 Emil Molberg'),
+           StringStruct(u'LegalCopyright', u'(C) 2024 Nasjonalbiblioteket'),
            StringStruct(u'OriginalFilename', u'Smelt.exe'),
            StringStruct(u'ProductName', u'Smelt'),
-           StringStruct(u'ProductVersion', u'1.0.0.1')])
+           StringStruct(u'ProductVersion', u'1.0.0')])
       ]
     ),
     VarFileInfo([VarStruct(u'Translation', [1033, 1200])])
