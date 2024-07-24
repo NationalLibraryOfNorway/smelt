@@ -37,7 +37,7 @@ def get_ffmpeg_path():
     """
     if getattr(sys, 'frozen', False):
         # If the application is run as a bundled executable, get the path to the ffmpeg executable
-        path = os.path.join(sys._MEIPASS, 'ffmpeg.exe')
+        path = os.path.join(sys._MEIPASS, 'ffmpeg.exe/ffmpeg.exe')
         os.chmod(path, stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
         return path
     else:
