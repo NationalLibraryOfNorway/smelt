@@ -20,13 +20,6 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
-      with:
-        lfs: true  # Enable LFS support
-
-    - name: Install Git LFS
-      run: |
-        git lfs install
-        git lfs pull
 
     - name: Set up Python
       uses: actions/setup-python@v2
@@ -63,6 +56,16 @@ jobs:
           libxcb-render-util0 \
           libxkbcommon-x11-0
 
+    - name: Extract FFmpeg (Windows)
+      if: matrix.os == 'windows-latest'
+      run: |
+        powershell -command "Expand-Archive -Path 'resources/ffmpeg.zip' -DestinationPath 'resources/'"
+      
+    - name: List contents of resources directory after extraction (Windows)
+      if: matrix.os == 'windows-latest'
+      run: |
+        Get-ChildItem -Path resources -Recurse
+         
     - name: Generate resources_rc.py (Windows)
       if: matrix.os == 'windows-latest'
       run: |
