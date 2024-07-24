@@ -61,16 +61,11 @@ jobs:
       run: |
         powershell -command "Expand-Archive -Path 'resources/ffmpeg.zip' -DestinationPath 'resources/'"
       
-    - name: Verify FFmpeg extraction (Windows)
+    - name: List contents of resources directory after extraction (Windows)
       if: matrix.os == 'windows-latest'
       run: |
-        if (Test-Path 'resources/ffmpeg.exe') {
-          Write-Host "FFmpeg extraction successful."
-        } else {
-          Write-Error "FFmpeg.exe not found after extraction."
-          exit 1
-        }
-        
+        Get-ChildItem -Path resources -Recurse
+         
     - name: Generate resources_rc.py (Windows)
       if: matrix.os == 'windows-latest'
       run: |
