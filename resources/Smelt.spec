@@ -1,53 +1,43 @@
 # -*- mode: python ; coding: utf-8 -*-
 
-block_cipher = None
 
 a = Analysis(
-    ['../Smelt.py'],  # Path to the script, relative to the spec file location
-    pathex=['..'],  # Path to the project root
+    ['../Smelt.py', '../resources/resources_rc.py'],
+    pathex=['..'],
     binaries=[],
     datas=[
-        ('../resources/icon.ico', 'icon.ico'),
-        ('../resources/ffmpeg.exe', 'ffmpeg.exe')
-    ],  # Corrected path to icon
-    hiddenimports=[
-        'PyQt5.QtCore',
-        'PyQt5.QtGui',
-        'PyQt5.QtWidgets',
-        'sip'
-    ],  # Add any other hidden imports if necessary
+    ('../resources/icon.ico', 'icon.ico'),
+    ('../resources/ffmpeg.exe', 'ffmpeg.exe')
+    ],
+    hiddenimports=[],
     hookspath=[],
+    hooksconfig={},
     runtime_hooks=[],
     excludes=[],
-    win_no_prefer_redirects=False,
-    win_private_assemblies=False,
-    cipher=block_cipher,
+    noarchive=False,
+    optimize=0,
 )
-pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
+pyz = PYZ(a.pure)
 
 exe = EXE(
     pyz,
     a.scripts,
+    a.binaries,
+    a.datas,
     [],
-    exclude_binaries=True,
     name='Smelt',
-    debug=True,  # Enable debugging
+    debug=False,
     bootloader_ignore_signals=False,
     strip=False,
     upx=True,
-    console=False,
-    icon='../resources/icon.ico',  # Corrected path to icon
-    version='../resources/version.txt'  # Corrected path to version file
-)
-
-coll = COLLECT(
-    exe,
-    a.binaries,
-    a.zipfiles,
-    a.datas,
-    strip=False,
-    upx=True,
     upx_exclude=[],
-    name='Smelt'
+    runtime_tmpdir=None,
+    console=False,
+    disable_windowed_traceback=False,
+    argv_emulation=False,
+    target_arch=None,
+    codesign_identity=None,
+    entitlements_file=None,
+    icon=['../resources/icon.ico'],
+    version='../resources/version.txt'
 )
-
