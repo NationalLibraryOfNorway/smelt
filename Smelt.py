@@ -11,6 +11,7 @@ Usage:
 2. Use the GUI to select files and start processing.
 
 """
+import atexit
 import glob
 import platform
 import queue
@@ -25,6 +26,7 @@ import time
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import *
+subprocesses = []
 
 
 def get_ffmpeg_path():
@@ -486,7 +488,7 @@ class Smelt(QWidget):
         proceed_combine = self.exist_check(combined_audio_file)
 
         ffmpeg_combine_audio_cmd = [
-            'ffmpeg',
+            ffmpeg_path,
             '-i', matching_files['L'],
             '-i', matching_files['R'],
             '-i', matching_files['C'],
@@ -1014,6 +1016,7 @@ class Smelt(QWidget):
         Returns:
             bool: True if the command was successful, False otherwise.
         """
+        global subprocesses
         if platform.system() == 'Windows':
             startupinfo = subprocess.STARTUPINFO()
             startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
@@ -1022,6 +1025,7 @@ class Smelt(QWidget):
 
         process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                    startupinfo=startupinfo, universal_newlines=True)
+        subprocesses.append(process)
         stdout_queue = queue.Queue()
         stderr_queue = queue.Queue()
 
@@ -1085,10 +1089,31 @@ class Smelt(QWidget):
         return True
 
 
+def cleanup():
+    # Terminate all subprocesses
+    global subprocesses
+    for process in subprocesses:
+        if process.poll() is None:  # If process is still running
+            process.terminate()  # Gracefully terminate the process
+            try:
+                process.wait(timeout=5)  # Wait for process to terminate
+            except subprocess.TimeoutExpired:
+                process.kill()  # Forcefully kill the process if it doesn't terminate
+
+    # Perform any other necessary cleanup here
+    # For example, closing open files, releasing resources, etc.
+
+
+atexit.register(cleanup)
 app = QApplication(sys.argv)
 app.setStyle('Breeze')
 
 window = Smelt()
 window.show()
 
+def on_exit():
+    cleanup()
+    sys.exit()
+
+app.aboutToQuit.connect(on_exit)
 sys.exit(app.exec_())
