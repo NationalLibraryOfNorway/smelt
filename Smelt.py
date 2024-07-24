@@ -1102,4 +1102,11 @@ app.setStyle('Breeze')
 window = Smelt()
 window.show()
 
+
+def on_exit():
+    cleanup()
+    sys.exit()
+
+
+app.aboutToQuit.connect(on_exit)
 sys.exit(app.exec_())
