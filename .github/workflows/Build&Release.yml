@@ -40,6 +40,7 @@ jobs:
         pip install pyinstaller
         pip install PyQt5
         pip install pywin32
+        pip install psutil
 
     - name: Install dependencies (Linux)
       if: matrix.os == 'ubuntu-latest'
@@ -47,6 +48,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install pyinstaller
         pip install PyQt5
+        pip install psutil
 
     - name: Install missing libraries (Linux)
       if: matrix.os == 'ubuntu-latest'
