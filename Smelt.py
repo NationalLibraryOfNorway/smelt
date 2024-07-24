@@ -48,6 +48,8 @@ if platform.system() == 'Windows':
     """
     ffmpeg_path = get_ffmpeg_path()
     import resources_rc
+else:
+    ffmpeg_path = 'ffmpeg'
 
 # Enable high DPI scaling
 if hasattr(QApplication, 'setAttribute'):
@@ -799,7 +801,7 @@ class Smelt(QWidget):
         ffmpeg_input_pattern = os.path.join(self.folder_path, '{}%06d.dpx'.format(prefix))
 
         self.ffmpeg_base = [
-            'ffmpeg', '-v',
+            ffmpeg_path, '-v',
             'info', '-stats',
             '-progress', '-',
         ]
@@ -878,7 +880,7 @@ class Smelt(QWidget):
         """
         Construct FFmpeg commands for MXF and MOV file processing.
         """
-        ffmpeg_base = ['ffmpeg', ]
+        ffmpeg_base = [ffmpeg_path, ]
 
         if self.inkluderLydCheckBox.isChecked and self.audio_file:
             ffmpeg_video_audio = ['-i', self.video, '-i', self.audio_file, ]
@@ -933,7 +935,7 @@ class Smelt(QWidget):
         Construct FFmpeg commands for audio file processing.
         """
         self.ffmpeg_audio_cmd = [
-            'ffmpeg',
+            ffmpeg_path,
             '-i', self.audio_file,
             '-c:a', 'aac',
             '-b:a', '192k',
@@ -943,7 +945,7 @@ class Smelt(QWidget):
             self.proceed_h264
         ]
         self.ffmpeg_lossless_audio_cmd = [
-            'ffmpeg',
+            ffmpeg_path,
             '-i', self.audio_file,
             '-c:a', 'pcm_s16le',
             '-vn',
