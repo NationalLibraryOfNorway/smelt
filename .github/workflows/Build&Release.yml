@@ -20,6 +20,13 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
+      with:
+        lfs: true  # Enable LFS support
+
+    - name: Install Git LFS
+      run: |
+        git lfs install
+        git lfs pull
 
     - name: Set up Python
       uses: actions/setup-python@v2
