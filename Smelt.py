@@ -681,6 +681,9 @@ class Smelt(QWidget):
         except subprocess.CalledProcessError as e:
             QMessageBox.critical(self, 'Error', 'En feil oppstod: {}'.format(e))
             self.output_text.append('Error: ' + str(e))
+        except Exception as e:
+            QMessageBox.critical(self, 'Error', 'En feil oppstod: {}'.format(e))
+            self.output_text.append('Error: ' + str(e))
         finally:
             self.lock_down(False)
             self.step_label.setText("Idle")
