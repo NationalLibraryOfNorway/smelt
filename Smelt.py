@@ -22,6 +22,7 @@ import sys
 import os
 import threading
 import time
+import psutil
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QIcon
@@ -1096,10 +1097,17 @@ def cleanup():
         if process.poll() is None:  # If process is still running
             process.terminate()  # Gracefully terminate the process
             try:
-                process.wait(timeout=5)  # Wait for process to terminate
+                process.wait(timeout=50)  # Wait for process to terminate
             except subprocess.TimeoutExpired:
                 process.kill()  # Forcefully kill the process if it doesn't terminate
 
+    for proc in psutil.process_iter():
+        try:
+            if proc.name() == "ffmpeg.exe":
+                proc.terminate()
+                proc.wait(timeout=5)
+        except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.TimeoutExpired):
+            pass
     # Perform any other necessary cleanup here
     # For example, closing open files, releasing resources, etc.
 
