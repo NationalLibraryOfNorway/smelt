@@ -7,8 +7,8 @@ a = Analysis(
     pathex=['..'],  # Path to the project root
     binaries=[],
     datas=[
-        ('../resources/icon.ico', 'icon.ico')
-        ('../resources/ffmpeg.exe', 'ffmpeg.exe'),
+        ('../resources/icon.ico', 'icon.ico'),
+        ('../resources/ffmpeg.exe', 'ffmpeg.exe')
     ],  # Corrected path to icon
     hiddenimports=[
         'PyQt5.QtCore',
