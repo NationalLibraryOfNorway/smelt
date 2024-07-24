@@ -11,7 +11,6 @@ Usage:
 2. Use the GUI to select files and start processing.
 
 """
-import atexit
 import glob
 import platform
 import queue
@@ -1087,6 +1086,14 @@ class Smelt(QWidget):
             self.output_text.append('Error: {}'.format('\n'.join(stderr_output)))
             return False
         return True
+
+
+def cleanup():
+    if os.path.exists(ffmpeg_path) and ffmpeg_path.__contains__("ffmpeg.exe/ffmpeg.exe"):
+        try:
+            os.remove(ffmpeg_path)
+        except Exception as e:
+            print(f"Failed to delete {ffmpeg_path}: {e}")
 
 
 app = QApplication(sys.argv)
