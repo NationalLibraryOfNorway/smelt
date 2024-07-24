@@ -1014,7 +1014,14 @@ class Smelt(QWidget):
         Returns:
             bool: True if the command was successful, False otherwise.
         """
-        process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+        if platform.system() == 'Windows':
+            startupinfo = subprocess.STARTUPINFO()
+            startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+        else:
+            startupinfo = None
+
+        process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                   startupinfo=startupinfo, universal_newlines=True)
         stdout_queue = queue.Queue()
         stderr_queue = queue.Queue()
 
