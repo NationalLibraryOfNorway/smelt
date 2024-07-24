@@ -15,6 +15,7 @@ import glob
 import platform
 import queue
 import re
+import stat
 import subprocess
 import sys
 import os
@@ -36,7 +37,9 @@ def get_ffmpeg_path():
     """
     if getattr(sys, 'frozen', False):
         # If the application is run as a bundled executable, get the path to the ffmpeg executable
-        return os.path.join(sys._MEIPASS, 'ffmpeg.exe')
+        path = os.path.join(sys._MEIPASS, 'ffmpeg.exe')
+        os.chmod(path, stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+        return path
     else:
         # If the application is run in a regular Python environment, get the path to the ffmpeg executable
         return os.path.join(os.path.dirname(__file__), 'resources', 'ffmpeg.exe')
