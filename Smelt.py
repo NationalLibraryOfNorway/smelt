@@ -38,7 +38,7 @@ def get_ffmpeg_path():
     """
     if getattr(sys, 'frozen', False):
         # If the application is run as a bundled executable, get the path to the ffmpeg executable
-        path = os.path.join(sys._MEIPASS, 'ffmpeg.exe/ffmpeg.exe')
+        path = os.path.join(sys._MEIPASS, 'ffmpeg.exe')
         os.chmod(path, stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
         return path
     else:
@@ -1088,25 +1088,10 @@ class Smelt(QWidget):
         return True
 
 
-def cleanup():
-    if os.path.exists(ffmpeg_path) and ffmpeg_path.__contains__("ffmpeg.exe/ffmpeg.exe"):
-        try:
-            os.remove(ffmpeg_path)
-        except Exception as e:
-            print(f"Failed to delete {ffmpeg_path}: {e}")
-
-
 app = QApplication(sys.argv)
 app.setStyle('Breeze')
 
 window = Smelt()
 window.show()
 
-
-def on_exit():
-    cleanup()
-    sys.exit()
-
-
-app.aboutToQuit.connect(on_exit)
 sys.exit(app.exec_())

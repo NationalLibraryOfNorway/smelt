@@ -6,8 +6,8 @@ a = Analysis(
     pathex=['..'],
     binaries=[],
     datas=[
-    ('../resources/icon.ico', 'icon.ico'),
-    ('../resources/ffmpeg.exe', 'ffmpeg.exe')
+    ('../resources/icon.ico', 'icons'),
+    ('../resources/ffmpeg.exe', '.')
     ],
     hiddenimports=[],
     hookspath=[],
