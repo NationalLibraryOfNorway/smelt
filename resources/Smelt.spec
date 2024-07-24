@@ -8,7 +8,7 @@ a = Analysis(
     binaries=[],
     datas=[
         ('../resources/icon.ico', 'icon.ico'),
-        ('resources/ffmpeg.exe', '.')
+        ('../resources/ffmpeg.exe', 'ffmpeg.exe')
     ],  # Corrected path to icon
     hiddenimports=[
         'PyQt5.QtCore',
