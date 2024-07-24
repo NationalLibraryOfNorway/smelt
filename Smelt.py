@@ -24,9 +24,30 @@ import time
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import *
-if platform.system() == 'Windows':
-    import resources_rc
 
+
+def get_ffmpeg_path():
+    """
+    Determines the path of the ffmpeg executable, whether the application runs bundled or in python environment.
+    Only for windows.
+
+    Returns:
+        ffmpeg_path: path to the ffmpeg executable
+    """
+    if getattr(sys, 'frozen', False):
+        # If the application is run as a bundled executable, get the path to the ffmpeg executable
+        return os.path.join(sys._MEIPASS, 'ffmpeg.exe')
+    else:
+        # If the application is run in a regular Python environment, get the path to the ffmpeg executable
+        return os.path.join(os.path.dirname(__file__), 'resources', 'ffmpeg.exe')
+
+
+if platform.system() == 'Windows':
+    """
+    Windows specific imports/settings
+    """
+    ffmpeg_path = get_ffmpeg_path()
+    import resources_rc
 
 # Enable high DPI scaling
 if hasattr(QApplication, 'setAttribute'):
@@ -97,7 +118,8 @@ def cuda_available():
     """
     Check if CUDA is available on the system.
 
-    This function checks for the presence of CUDA support in FFmpeg and the availability of an NVIDIA GPU using 'nvidia-smi'.
+    This function checks for the presence of CUDA support in FFmpeg and
+    the availability of an NVIDIA GPU using 'nvidia-smi'.
 
     Returns:
         bool: True if CUDA is available, False otherwise.
@@ -139,6 +161,7 @@ class Smelt(QWidget):
         super(Smelt, self).__init__()
 
         # Initialize paths and filenames
+        self.ffmpeg_hardware_accel = None
         self.ffmpeg_dcp_prores = None
         self.ffmpeg_encoder = None
         self.video_encoder = None
@@ -487,24 +510,25 @@ class Smelt(QWidget):
         """
         file_types = {
             '.dpx': glob.glob(os.path.join(folder_path, '*.dpx')),
-            '.mxf': [f for f in glob.glob(os.path.join(folder_path, '*.mxf')) if 'AUDIO' not in os.path.basename(f).upper()],
+            '.mxf': [f for f in glob.glob(os.path.join(folder_path, '*.mxf')) if
+                     'AUDIO' not in os.path.basename(f).upper()],
             '.mov': glob.glob(os.path.join(folder_path, '*.mov'))
         }
 
         available_types = {ext: files for ext, files in file_types.items() if files}
-        buttons = {ext: QPushButton(f"{ext} files") for ext in available_types}
+        buttons = {ext: QPushButton("{} files".format(ext)) for ext in available_types}
 
         if len(available_types) > 1:
             file_desc = ' og '.join(available_types.keys())
             msg = create_file_selection_box(
-                f"Fant både {file_desc} filer. Vennligst velg ett av alternativene!",
+                "Fant både {} filer. Vennligst velg ett av alternativene!".format(file_desc),
                 list(buttons.values())
             )
         else:
             msg = None
 
         if msg:
-            retval = msg.exec_()
+            msg.exec_()
             for ext, button in buttons.items():
                 if msg.clickedButton() == button:
                     self.selected_files = available_types[ext]
@@ -527,7 +551,8 @@ class Smelt(QWidget):
                 self.mappe_input_field.setText(self.selected_files[0])
             else:
                 self.selected_files = []
-                QMessageBox.warning(self, 'Advarsel', 'Ingen .dpx, .mxf (FILM), eller .mov filer funnet i den valgte mappen.')
+                QMessageBox.warning(self, 'Advarsel',
+                                    'Ingen .dpx, .mxf (FILM), eller .mov filer funnet i den valgte mappen.')
 
     def check_box_logic(self, knapp):
         """
@@ -706,7 +731,6 @@ class Smelt(QWidget):
         self.prores_mov = os.path.join(folder_path, 'lossless', '{}_prores.mov'.format(self.folder_name))
         self.h264_mp4 = os.path.join(folder_path, 'lossless', 'nb-no_{}.mp4'.format(self.folder_name))
 
-        os.makedirs(os.path.join(folder_path, 'logs'), exist_ok=True)
         os.makedirs(os.path.join(folder_path, 'lossless'), exist_ok=True)
 
         self.proceed_h264 = self.exist_check(self.h264_mp4)
@@ -794,11 +818,12 @@ class Smelt(QWidget):
         else:
             audio_cmd = []
 
-        self.ffmpeg_lossless_cmd = self.ffmpeg_base + self.ffmpeg_hardware_accel + ffmpeg_dpx + self.ffmpeg_encoder + audio_cmd + [
-                '-qp', '0',
-                self.lossless_mov,
-                self.proceed_lossless
-            ]
+        self.ffmpeg_lossless_cmd = (self.ffmpeg_base + self.ffmpeg_hardware_accel + ffmpeg_dpx +
+                                    self.ffmpeg_encoder + audio_cmd + [
+                                        '-qp', '0',
+                                        self.lossless_mov,
+                                        self.proceed_lossless
+                                    ])
 
         if self.inkluderLydCheckBox.isChecked():
             self.ffmpeg_h264_cmd_direct = self.ffmpeg_base + self.ffmpeg_hardware_accel + ffmpeg_dpx + audio_cmd + [
@@ -853,7 +878,7 @@ class Smelt(QWidget):
         """
         Construct FFmpeg commands for MXF and MOV file processing.
         """
-        ffmpeg_base = ['ffmpeg',]
+        ffmpeg_base = ['ffmpeg', ]
 
         if self.inkluderLydCheckBox.isChecked and self.audio_file:
             ffmpeg_video_audio = ['-i', self.video, '-i', self.audio_file, ]
@@ -862,7 +887,7 @@ class Smelt(QWidget):
                 '-b:a', '224k',
             ]
         else:
-            ffmpeg_video_audio = ['-i', self.video,]
+            ffmpeg_video_audio = ['-i', self.video, ]
             ffmpeg_audio_param = []
         self.ffmpeg_dcp_cmd = ffmpeg_base + self.ffmpeg_hardware_accel + ffmpeg_video_audio + self.ffmpeg_encoder + [
             '-preset', 'slow',
@@ -1031,7 +1056,9 @@ class Smelt(QWidget):
                 elapsed_time = time.time() - start_time
                 remaining_time = elapsed_time * (100 - progress) / progress if progress > 0 else 0
                 self.progress_bar.setValue(int(progress))
-                self.progress_bar.setFormat("{}% - Estimated time left: {}m {}s".format(int(progress), int(remaining_time // 60), int(remaining_time % 60)))
+                self.progress_bar.setFormat(
+                    "{}% - Estimated time left: {}m {}s".format(int(progress), int(remaining_time // 60),
+                                                                int(remaining_time % 60)))
 
         stdout_thread.join()
         stderr_thread.join()
