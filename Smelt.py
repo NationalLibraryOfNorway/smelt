@@ -28,30 +28,31 @@ from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import *
 
 
-def get_ffmpeg_path():
-    """
-    Determines the path of the ffmpeg executable, whether the application runs bundled or in python environment.
-    Only for windows.
-
-    Returns:
-        ffmpeg_path: path to the ffmpeg executable
-    """
-    if getattr(sys, 'frozen', False):
-        # If the application is run as a bundled executable, get the path to the ffmpeg executable
-        path = os.path.join(sys._MEIPASS, 'ffmpeg.exe')
-        os.chmod(path, stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
-        return path
-    else:
-        # If the application is run in a regular Python environment, get the path to the ffmpeg executable
-        return os.path.join(os.path.dirname(__file__), 'resources', 'ffmpeg.exe')
+# def get_ffmpeg_path():
+#     """
+#     Determines the path of the ffmpeg executable, whether the application runs bundled or in python environment.
+#     Only for windows.
+#
+#     Returns:
+#         ffmpeg_path: path to the ffmpeg executable
+#     """
+#     if getattr(sys, 'frozen', False):
+#         # If the application is run as a bundled executable, get the path to the ffmpeg executable
+#         path = os.path.join(sys._MEIPASS, 'ffmpeg.exe')
+#         os.chmod(path, stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+#         return path
+#     else:
+#         # If the application is run in a regular Python environment, get the path to the ffmpeg executable
+#         return os.path.join(os.path.dirname(__file__), 'resources', 'ffmpeg.exe')
 
 
 if platform.system() == 'Windows':
     """
     Windows specific imports/settings
     """
-    ffmpeg_path = get_ffmpeg_path()
+    # ffmpeg_path = get_ffmpeg_path()
     import resources_rc
+    ffmpeg_path = 'ffmpeg'
 else:
     ffmpeg_path = 'ffmpeg'
 
