@@ -5,7 +5,10 @@ a = Analysis(
     ['../Smelt.py', '../resources/resources_rc.py'],
     pathex=['..'],
     binaries=[],
-    datas=[('../resources/icon.ico', 'icon.ico')],
+    datas=[
+    ('../resources/icon.ico', 'icons'),
+    ('../resources/ffmpeg.exe', '.')
+    ],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},

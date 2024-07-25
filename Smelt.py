@@ -11,10 +11,12 @@ Usage:
 2. Use the GUI to select files and start processing.
 
 """
+import atexit
 import glob
 import platform
 import queue
 import re
+import stat
 import subprocess
 import sys
 import os
@@ -24,9 +26,34 @@ import time
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import *
+
+
+def get_ffmpeg_path():
+    """
+    Determines the path of the ffmpeg executable, whether the application runs bundled or in python environment.
+    Only for windows.
+
+    Returns:
+        ffmpeg_path: path to the ffmpeg executable
+    """
+    if getattr(sys, 'frozen', False):
+        # If the application is run as a bundled executable, get the path to the ffmpeg executable
+        path = os.path.join(sys._MEIPASS, 'ffmpeg.exe')
+        return path
+    else:
+        # If the application is run in a regular Python environment, get the path to the ffmpeg executable
+        return os.path.join(os.path.dirname(__file__), 'resources', 'ffmpeg.exe')
+
+
 if platform.system() == 'Windows':
+    """
+    Windows specific imports/settings
+    """
+    ffmpeg_path = get_ffmpeg_path()
     import resources_rc
 
+else:
+    ffmpeg_path = 'ffmpeg'
 
 # Enable high DPI scaling
 if hasattr(QApplication, 'setAttribute'):
@@ -97,7 +124,8 @@ def cuda_available():
     """
     Check if CUDA is available on the system.
 
-    This function checks for the presence of CUDA support in FFmpeg and the availability of an NVIDIA GPU using 'nvidia-smi'.
+    This function checks for the presence of CUDA support in FFmpeg and
+    the availability of an NVIDIA GPU using 'nvidia-smi'.
 
     Returns:
         bool: True if CUDA is available, False otherwise.
@@ -139,6 +167,7 @@ class Smelt(QWidget):
         super(Smelt, self).__init__()
 
         # Initialize paths and filenames
+        self.ffmpeg_hardware_accel = None
         self.ffmpeg_dcp_prores = None
         self.ffmpeg_encoder = None
         self.video_encoder = None
@@ -458,7 +487,7 @@ class Smelt(QWidget):
         proceed_combine = self.exist_check(combined_audio_file)
 
         ffmpeg_combine_audio_cmd = [
-            'ffmpeg',
+            ffmpeg_path,
             '-i', matching_files['L'],
             '-i', matching_files['R'],
             '-i', matching_files['C'],
@@ -487,24 +516,25 @@ class Smelt(QWidget):
         """
         file_types = {
             '.dpx': glob.glob(os.path.join(folder_path, '*.dpx')),
-            '.mxf': [f for f in glob.glob(os.path.join(folder_path, '*.mxf')) if 'AUDIO' not in os.path.basename(f).upper()],
+            '.mxf': [f for f in glob.glob(os.path.join(folder_path, '*.mxf')) if
+                     'AUDIO' not in os.path.basename(f).upper()],
             '.mov': glob.glob(os.path.join(folder_path, '*.mov'))
         }
 
         available_types = {ext: files for ext, files in file_types.items() if files}
-        buttons = {ext: QPushButton(f"{ext} files") for ext in available_types}
+        buttons = {ext: QPushButton("{} files".format(ext)) for ext in available_types}
 
         if len(available_types) > 1:
             file_desc = ' og '.join(available_types.keys())
             msg = create_file_selection_box(
-                f"Fant både {file_desc} filer. Vennligst velg ett av alternativene!",
+                "Fant både {} filer. Vennligst velg ett av alternativene!".format(file_desc),
                 list(buttons.values())
             )
         else:
             msg = None
 
         if msg:
-            retval = msg.exec_()
+            msg.exec_()
             for ext, button in buttons.items():
                 if msg.clickedButton() == button:
                     self.selected_files = available_types[ext]
@@ -527,7 +557,8 @@ class Smelt(QWidget):
                 self.mappe_input_field.setText(self.selected_files[0])
             else:
                 self.selected_files = []
-                QMessageBox.warning(self, 'Advarsel', 'Ingen .dpx, .mxf (FILM), eller .mov filer funnet i den valgte mappen.')
+                QMessageBox.warning(self, 'Advarsel',
+                                    'Ingen .dpx, .mxf (FILM), eller .mov filer funnet i den valgte mappen.')
 
     def check_box_logic(self, knapp):
         """
@@ -654,6 +685,9 @@ class Smelt(QWidget):
         except subprocess.CalledProcessError as e:
             QMessageBox.critical(self, 'Error', 'En feil oppstod: {}'.format(e))
             self.output_text.append('Error: ' + str(e))
+        except Exception as e:
+            QMessageBox.critical(self, 'Error', 'En feil oppstod: {}'.format(e))
+            self.output_text.append('Error: ' + str(e))
         finally:
             self.lock_down(False)
             self.step_label.setText("Idle")
@@ -706,7 +740,6 @@ class Smelt(QWidget):
         self.prores_mov = os.path.join(folder_path, 'lossless', '{}_prores.mov'.format(self.folder_name))
         self.h264_mp4 = os.path.join(folder_path, 'lossless', 'nb-no_{}.mp4'.format(self.folder_name))
 
-        os.makedirs(os.path.join(folder_path, 'logs'), exist_ok=True)
         os.makedirs(os.path.join(folder_path, 'lossless'), exist_ok=True)
 
         self.proceed_h264 = self.exist_check(self.h264_mp4)
@@ -769,13 +802,54 @@ class Smelt(QWidget):
     def construct_dpx_commands(self):
         """
         Construct FFmpeg commands for DPX file processing.
+
+        This method constructs a set of FFmpeg commands for processing DPX image sequences
+        into various video formats including lossless MOV, H.264 MP4, and ProRes MOV.
+
+        Commands:
+        - ffmpeg_base: Base FFmpeg command with verbosity and progress options.
+        - ffmpeg_dpx: Command to input DPX image sequence and optional audio file.
+            - '-f image2': Input format as image sequence.
+            - '-vsync 0': Disable frame duplication or dropping.
+            - '-framerate': Frame rate for the input sequence.
+            - '-start_number 0': Start frame number.
+            - '-i': Input file pattern for DPX files.
+
+        Conditional Commands:
+        - If audio is included:
+            - '-i': Audio file input.
+            - '-c:a copy': Copy audio codec without re-encoding.
+
+        Output Commands:
+        - Lossless MOV:
+            - '-qp 0': Lossless quality.
+        - H.264 MP4:
+            - '-c:v libx264': Use H.264 codec for video.
+            - '-pix_fmt yuv420p': Pixel format.
+            - '-vf scale=-2:1080': Scale video to 1080p while preserving aspect ratio.
+            - '-preset slow': Encoding speed/quality tradeoff.
+            - '-crf 23': Constant rate factor for quality control.
+            - '-c:a aac': Use AAC codec for audio.
+            - '-b:a 224k': Audio bitrate.
+            - '-map 0:v:0': Map first video stream.
+            - '-map 1:a:0': Map first audio stream.
+        - ProRes MOV:
+            - '-c:v prores': Use ProRes codec for video.
+            - '-profile:v 3': ProRes 422 HQ profile.
+            - '-c:a pcm_s16le': Use PCM audio codec with 16-bit little-endian samples.
+
+        The constructed commands are stored in instance variables:
+        - self.ffmpeg_lossless_cmd
+        - self.ffmpeg_h264_cmd_direct
+        - self.ffmpeg_prores_cmd
+        - self.ffmpeg_h264_cmd
         """
         base_filename = os.path.basename(self.images_path)
         prefix = re.match(r'^\D*', base_filename).group()
         ffmpeg_input_pattern = os.path.join(self.folder_path, '{}%06d.dpx'.format(prefix))
 
         self.ffmpeg_base = [
-            'ffmpeg', '-v',
+            ffmpeg_path, '-v',
             'info', '-stats',
             '-progress', '-',
         ]
@@ -794,11 +868,12 @@ class Smelt(QWidget):
         else:
             audio_cmd = []
 
-        self.ffmpeg_lossless_cmd = self.ffmpeg_base + self.ffmpeg_hardware_accel + ffmpeg_dpx + self.ffmpeg_encoder + audio_cmd + [
-                '-qp', '0',
-                self.lossless_mov,
-                self.proceed_lossless
-            ]
+        self.ffmpeg_lossless_cmd = (self.ffmpeg_base + self.ffmpeg_hardware_accel + ffmpeg_dpx +
+                                    self.ffmpeg_encoder + audio_cmd + [
+                                        '-qp', '0',
+                                        self.lossless_mov,
+                                        self.proceed_lossless
+                                    ])
 
         if self.inkluderLydCheckBox.isChecked():
             self.ffmpeg_h264_cmd_direct = self.ffmpeg_base + self.ffmpeg_hardware_accel + ffmpeg_dpx + audio_cmd + [
@@ -852,8 +927,40 @@ class Smelt(QWidget):
     def construct_mxf_mov_commands(self):
         """
         Construct FFmpeg commands for MXF and MOV file processing.
+
+        This method constructs FFmpeg commands to process MXF and MOV files into lossless MOV,
+        H.264 MP4, and ProRes MOV formats.
+
+        Commands:
+        - ffmpeg_base: Base FFmpeg command.
+        - ffmpeg_video_audio: Input video and optionally audio file.
+        - ffmpeg_audio_param: Parameters for audio encoding.
+
+        Output Commands:
+        - Lossless MOV:
+            - '-qp 0': Lossless quality.
+            - '-c:a copy': Copy audio codec without re-encoding.
+        - ProRes MOV:
+            - '-c:v prores': Use ProRes codec for video.
+            - '-profile:v 3': ProRes 422 HQ profile.
+            - '-pix_fmt yuv422p10le': 10-bit YUV 4:2:2 pixel format.
+            - '-vf scale=-2:1080': Scale video to 1080p while preserving aspect ratio.
+            - '-c:a pcm_s16le': Use PCM audio codec with 16-bit little-endian samples.
+        - H.264 MP4:
+            - '-c:v libx264': Use H.264 codec for video.
+            - '-pix_fmt yuv420p': Pixel format.
+            - '-preset slow': Encoding speed/quality tradeoff.
+            - '-crf 21': Constant rate factor for quality control.
+            - '-ac 2': Set number of audio channels to 2.
+            - '-b:a 224k': Audio bitrate.
+
+        The constructed commands are stored in instance variables:
+        - self.ffmpeg_dcp_cmd
+        - self.ffmpeg_dcp_prores
+        - self.ffmpeg_dcp_h264_cmd
+        - self.ffmpeg_h264_from_prores_cmd
         """
-        ffmpeg_base = ['ffmpeg',]
+        ffmpeg_base = [ffmpeg_path, ]
 
         if self.inkluderLydCheckBox.isChecked and self.audio_file:
             ffmpeg_video_audio = ['-i', self.video, '-i', self.audio_file, ]
@@ -862,7 +969,7 @@ class Smelt(QWidget):
                 '-b:a', '224k',
             ]
         else:
-            ffmpeg_video_audio = ['-i', self.video,]
+            ffmpeg_video_audio = ['-i', self.video, ]
             ffmpeg_audio_param = []
         self.ffmpeg_dcp_cmd = ffmpeg_base + self.ffmpeg_hardware_accel + ffmpeg_video_audio + self.ffmpeg_encoder + [
             '-preset', 'slow',
@@ -906,9 +1013,26 @@ class Smelt(QWidget):
     def construct_audio_commands(self):
         """
         Construct FFmpeg commands for audio file processing.
+
+        This method constructs FFmpeg commands to process audio files into AAC and PCM formats.
+
+        Commands:
+        - ffmpeg_audio_cmd: Command to convert audio to AAC format.
+            - '-i': Input audio file.
+            - '-c:a aac': Use AAC codec for audio.
+            - '-b:a 192k': Audio bitrate.
+            - '-vn': Disable video.
+        - ffmpeg_lossless_audio_cmd: Command to convert audio to PCM format.
+            - '-i': Input audio file.
+            - '-c:a pcm_s16le': Use PCM audio codec with 16-bit little-endian samples.
+            - '-vn': Disable video.
+
+        The constructed commands are stored in instance variables:
+        - self.ffmpeg_audio_cmd
+        - self.ffmpeg_lossless_audio_cmd
         """
         self.ffmpeg_audio_cmd = [
-            'ffmpeg',
+            ffmpeg_path,
             '-i', self.audio_file,
             '-c:a', 'aac',
             '-b:a', '192k',
@@ -918,7 +1042,7 @@ class Smelt(QWidget):
             self.proceed_h264
         ]
         self.ffmpeg_lossless_audio_cmd = [
-            'ffmpeg',
+            ffmpeg_path,
             '-i', self.audio_file,
             '-c:a', 'pcm_s16le',
             '-vn',
@@ -981,7 +1105,14 @@ class Smelt(QWidget):
         Returns:
             bool: True if the command was successful, False otherwise.
         """
-        process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+        if platform.system() == 'Windows':
+            startupinfo = subprocess.STARTUPINFO()
+            startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+        else:
+            startupinfo = None
+
+        process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                   startupinfo=startupinfo, universal_newlines=True)
         stdout_queue = queue.Queue()
         stderr_queue = queue.Queue()
 
@@ -1031,7 +1162,9 @@ class Smelt(QWidget):
                 elapsed_time = time.time() - start_time
                 remaining_time = elapsed_time * (100 - progress) / progress if progress > 0 else 0
                 self.progress_bar.setValue(int(progress))
-                self.progress_bar.setFormat("{}% - Estimated time left: {}m {}s".format(int(progress), int(remaining_time // 60), int(remaining_time % 60)))
+                self.progress_bar.setFormat(
+                    "{}% - Estimated time left: {}m {}s".format(int(progress), int(remaining_time // 60),
+                                                                int(remaining_time % 60)))
 
         stdout_thread.join()
         stderr_thread.join()
