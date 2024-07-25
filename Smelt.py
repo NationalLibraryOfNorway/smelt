@@ -47,7 +47,7 @@ def get_ffmpeg_path():
     """
     if platform.system() == 'Windows':
         if getattr(sys, 'frozen', False):
-            return tempfile.gettempdir().join('ffmpeg.exe')
+            return tempfile.gettempdir().join('/ffmpeg.exe')
         else:
             return os.path.join(os.path.dirname(__file__), 'resources', 'ffmpeg.exe')
     else:
