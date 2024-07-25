@@ -11,6 +11,7 @@ Usage:
 2. Use the GUI to select files and start processing.
 
 """
+import atexit
 import glob
 import platform
 import queue
@@ -21,6 +22,7 @@ import sys
 import os
 import threading
 import time
+import tempfile
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QIcon
@@ -1086,6 +1088,12 @@ class Smelt(QWidget):
             self.output_text.append('Error: {}'.format('\n'.join(stderr_output)))
             return False
         return True
+
+    @staticmethod
+    def cleanup():
+        tempfile.TemporaryDirectory.cleanup()
+
+    atexit.register(cleanup)
 
 
 app = QApplication(sys.argv)
