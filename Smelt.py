@@ -20,14 +20,30 @@ import stat
 import subprocess
 import sys
 import os
+import tempfile
 import threading
 import time
-import tempfile
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import *
 subprocesses = []
+
+
+def cleanup_temp_files():
+    temp_dir = tempfile.gettempdir()
+    temp_path = os.path.join(temp_dir, "ffmpeg.exe")
+    try:
+        if os.path.exists(ffmpeg_path):
+            os.remove(ffmpeg_path)
+            print("Temporary file ffmpeg.exe removed.")
+        else:
+            print("Temporary file ffmpeg.exe not found.")
+    except Exception as e:
+        print(f"Error removing temporary file ffmpeg.exe: {e}")
+
+
+atexit.register(cleanup_temp_files)
 
 
 def get_ffmpeg_path():
@@ -1088,12 +1104,6 @@ class Smelt(QWidget):
             self.output_text.append('Error: {}'.format('\n'.join(stderr_output)))
             return False
         return True
-
-    @staticmethod
-    def cleanup():
-        tempfile.TemporaryDirectory.cleanup()
-
-    atexit.register(cleanup)
 
 
 app = QApplication(sys.argv)
