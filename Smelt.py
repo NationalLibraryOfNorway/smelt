@@ -13,7 +13,6 @@ import re
 import subprocess
 import sys
 import os
-import tempfile
 import threading
 import time
 
@@ -47,7 +46,7 @@ def get_ffmpeg_path():
     """
     if platform.system() == 'Windows':
         if getattr(sys, 'frozen', False):
-            return tempfile.gettempdir().join('/ffmpeg.exe')
+            return os.path.join(sys._MEIPASS, 'ffmpeg.exe')
         else:
             return os.path.join(os.path.dirname(__file__), 'resources', 'ffmpeg.exe')
     else:
