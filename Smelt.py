@@ -5,18 +5,11 @@ This application provides functionalities for:
 - Selecting and processing video and audio files
 - Combining multichannel audio files
 - Converting and processing video files using FFmpeg
-
-Usage:
-1. Run `setup.sh` or `setup.bat` to set up the environment.
-2. Use the GUI to select files and start processing.
-
 """
-import atexit
 import glob
 import platform
 import queue
 import re
-import stat
 import subprocess
 import sys
 import os
@@ -28,37 +21,36 @@ from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import *
 
 
+def setup():
+    """
+    Simple method for some initial setup or imports based on specific operating systems, or other variables
+    """
+    if platform.system() == 'Windows':
+        import resources_rc
+
+    if hasattr(QApplication, 'setAttribute'):
+        """
+        Enable high dpi scaling
+        """
+        QApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
+        QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps)
+
+
 def get_ffmpeg_path():
     """
-    Determines the path of the ffmpeg executable, whether the application runs bundled or in python environment.
-    Only for windows.
+    Determines the path of the ffmpeg executable, whether the application runs bundled or in a Python environment.
+    Only for Windows.
 
     Returns:
-        ffmpeg_path: path to the ffmpeg executable
+        str: Path to the ffmpeg executable.
     """
-    if getattr(sys, 'frozen', False):
-        # If the application is run as a bundled executable, get the path to the ffmpeg executable
-        path = os.path.join(sys._MEIPASS, 'ffmpeg.exe')
-        return path
+    if platform.system() == 'Windows':
+        if getattr(sys, 'frozen', False):
+            return os.path.join(sys._MEIPASS, 'ffmpeg.exe')
+        else:
+            return os.path.join(os.path.dirname(__file__), 'resources', 'ffmpeg.exe')
     else:
-        # If the application is run in a regular Python environment, get the path to the ffmpeg executable
-        return os.path.join(os.path.dirname(__file__), 'resources', 'ffmpeg.exe')
-
-
-if platform.system() == 'Windows':
-    """
-    Windows specific imports/settings
-    """
-    ffmpeg_path = get_ffmpeg_path()
-    import resources_rc
-
-else:
-    ffmpeg_path = 'ffmpeg'
-
-# Enable high DPI scaling
-if hasattr(QApplication, 'setAttribute'):
-    QApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
-    QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps)
+        return 'ffmpeg'
 
 
 def create_file_selection_box(text, buttons):
@@ -140,18 +132,15 @@ def cuda_available():
         - Catches and prints any other exceptions that occur during the checks.
     """
     try:
-        # Check if ffmpeg has CUDA support
         result = subprocess.run(['ffmpeg', '-hwaccels'], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                 universal_newlines=True)
         if 'cuda' in result.stdout:
-            # Check if nvidia-smi is available (indicates presence of NVIDIA GPU)
             result = subprocess.run(['nvidia-smi'], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                     universal_newlines=True)
             if result.returncode == 0:
                 return True
         return False
     except FileNotFoundError:
-        # Handle case where 'nvidia-smi' is not found
         return False
     except Exception as e:
         print("CUDA availability check failed: {}".format(e))
@@ -167,6 +156,8 @@ class Smelt(QWidget):
         super(Smelt, self).__init__()
 
         # Initialize paths and filenames
+        self.process = None
+        self.process_terminated = None
         self.ffmpeg_hardware_accel = None
         self.ffmpeg_dcp_prores = None
         self.ffmpeg_encoder = None
@@ -233,6 +224,16 @@ class Smelt(QWidget):
         self.set_default_states()
         self.designate_button_methods()
         self.set_styling()
+        self.center_window()
+
+    def center_window(self):
+        """
+        Center the window on the screen.
+        """
+        qr = self.frameGeometry()
+        cp = QDesktopWidget().availableGeometry().center()
+        qr.moveCenter(cp)
+        self.move(qr.topLeft())
 
     def create_labels(self):
         """
@@ -592,24 +593,13 @@ class Smelt(QWidget):
             self.mappeButton,
             self.fil_input_field,
             self.mappe_input_field,
-            self.execButton,
             self.filButton,
             self.filmButton
         ]
         for widget in widgets_to_lock:
             widget.setEnabled(not lock)
 
-    def drop_down_list_fix(self):
-        """
-        Attempt to fix the dropdown box styling.
-        """
-        view = self.fpsCounter.view()
-        if self.fpsCounter.currentIndex() % 2 == 0:
-            view.setStyleSheet("border: 2px solid gray;")
-        else:
-            view.setStyleSheet("border: 2px solid red;")
-        view.updateGeometry()
-        view.update()
+        self.toggle_execute_button()
 
     def determine_file_type(self):
         """
@@ -675,13 +665,23 @@ class Smelt(QWidget):
             self.step_label.setText('Idle')
             return
 
+        self.process_terminated = False
+
         try:
             if not self.kunLydCheckBox.isChecked():
                 self.handle_video_operations()
             else:
                 self.handle_audio_operations()
 
-            QMessageBox.information(self, 'Success', 'Konvertering fullført.')
+            if not self.process_terminated:
+                QMessageBox.information(self, 'Success', 'Konvertering fullført.')
+                self.progress_bar.setValue(100)
+                self.progress_bar.setFormat("100% - Done")
+            else:
+                QMessageBox.critical(self, 'Terminated', 'Prosessen ble avbrutt.')
+                self.progress_bar.setValue(100)
+                self.progress_bar.setFormat("100% - Terminated")
+
         except subprocess.CalledProcessError as e:
             QMessageBox.critical(self, 'Error', 'En feil oppstod: {}'.format(e))
             self.output_text.append('Error: ' + str(e))
@@ -691,8 +691,6 @@ class Smelt(QWidget):
         finally:
             self.lock_down(False)
             self.step_label.setText("Idle")
-            self.progress_bar.setValue(100)
-            self.progress_bar.setFormat("100% - Done")
 
     def initial_setup(self):
         """
@@ -772,6 +770,47 @@ class Smelt(QWidget):
         result = QMessageBox.question(self, 'Start konvertering', 'Fant {} i {}. Trykk ok for å gå videre.'.format(
             os.path.basename(self.images_path), folder_path), QMessageBox.Ok | QMessageBox.Cancel)
         return result == QMessageBox.Ok
+
+    def toggle_execute_button(self):
+        """
+        Toggle the text and functionality of the execute button between 'Kjør' and 'Avbryt'.
+
+        This method changes the button text and disconnects the current click event handler,
+        then connects the appropriate handler based on the current state:
+        - When the button text is 'Kjør' (Run),
+         it changes to 'Avbryt' (Abort) and connects the button to the abort method.
+        - When the button text is 'Avbryt' (Abort),
+         it changes to 'Kjør' (Run) and connects the button to the run_smelt method.
+        """
+        if self.execButton.text() == 'Kjør':
+            self.execButton.setText('Avbryt')
+            self.execButton.clicked.disconnect()
+            self.execButton.clicked.connect(self.abort)
+
+        elif self.execButton.text() == 'Avbryt':
+            self.execButton.setText('Kjør')
+            self.execButton.clicked.disconnect()
+            self.execButton.clicked.connect(self.run_smelt)
+
+    def abort(self):
+        """
+        Handle the process abortion when the user requests to stop the ongoing operation.
+
+        This method shows a confirmation dialog to the user. If the user confirms, it attempts to terminate the
+        ongoing FFmpeg process. Any exception during the termination is caught and displayed as a critical error.
+        Upon successful termination or if the process was aborted,
+         an appropriate message is appended to the output text area.
+        """
+        reply = QMessageBox.question(self, 'Bekreft avbrytelse',
+                                     'Er du sikker på at du vil avbryte prosessen?',
+                                     QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+        if reply == QMessageBox.Yes:
+            try:
+                self.process.terminate()
+                self.process_terminated = True
+            except Exception as e:
+                QMessageBox.critical(self, 'Error:', 'feil i termineringen av prosessen {}'.format(e))
+            self.output_text.append('FFmpeg process aborted.')
 
     def handle_video_operations(self):
         """
@@ -1111,8 +1150,8 @@ class Smelt(QWidget):
         else:
             startupinfo = None
 
-        process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                                   startupinfo=startupinfo, universal_newlines=True)
+        self.process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                        startupinfo=startupinfo, universal_newlines=True)
         stdout_queue = queue.Queue()
         stderr_queue = queue.Queue()
 
@@ -1121,8 +1160,8 @@ class Smelt(QWidget):
                 queue.put(line)
             pipe.close()
 
-        stdout_thread = threading.Thread(target=enqueue_output, args=(process.stdout, stdout_queue))
-        stderr_thread = threading.Thread(target=enqueue_output, args=(process.stderr, stderr_queue))
+        stdout_thread = threading.Thread(target=enqueue_output, args=(self.process.stdout, stdout_queue))
+        stderr_thread = threading.Thread(target=enqueue_output, args=(self.process.stderr, stderr_queue))
         stdout_thread.start()
         stderr_thread.start()
 
@@ -1134,7 +1173,7 @@ class Smelt(QWidget):
             try:
                 line = stderr_queue.get_nowait()
             except queue.Empty:
-                if process.poll() is not None:
+                if self.process.poll() is not None:
                     break
                 time.sleep(0.1)
                 continue
@@ -1168,14 +1207,16 @@ class Smelt(QWidget):
 
         stdout_thread.join()
         stderr_thread.join()
-        process.wait()
+        self.process.wait()
 
-        if process.returncode != 0:
+        if self.process.returncode != 0:
             self.output_text.append('Error: {}'.format('\n'.join(stderr_output)))
             return False
         return True
 
 
+setup()
+ffmpeg_path = get_ffmpeg_path()
 app = QApplication(sys.argv)
 app.setStyle('Breeze')
 
