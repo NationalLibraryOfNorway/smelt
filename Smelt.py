@@ -802,6 +802,47 @@ class Smelt(QWidget):
     def construct_dpx_commands(self):
         """
         Construct FFmpeg commands for DPX file processing.
+
+        This method constructs a set of FFmpeg commands for processing DPX image sequences
+        into various video formats including lossless MOV, H.264 MP4, and ProRes MOV.
+
+        Commands:
+        - ffmpeg_base: Base FFmpeg command with verbosity and progress options.
+        - ffmpeg_dpx: Command to input DPX image sequence and optional audio file.
+            - '-f image2': Input format as image sequence.
+            - '-vsync 0': Disable frame duplication or dropping.
+            - '-framerate': Frame rate for the input sequence.
+            - '-start_number 0': Start frame number.
+            - '-i': Input file pattern for DPX files.
+
+        Conditional Commands:
+        - If audio is included:
+            - '-i': Audio file input.
+            - '-c:a copy': Copy audio codec without re-encoding.
+
+        Output Commands:
+        - Lossless MOV:
+            - '-qp 0': Lossless quality.
+        - H.264 MP4:
+            - '-c:v libx264': Use H.264 codec for video.
+            - '-pix_fmt yuv420p': Pixel format.
+            - '-vf scale=-2:1080': Scale video to 1080p while preserving aspect ratio.
+            - '-preset slow': Encoding speed/quality tradeoff.
+            - '-crf 23': Constant rate factor for quality control.
+            - '-c:a aac': Use AAC codec for audio.
+            - '-b:a 224k': Audio bitrate.
+            - '-map 0:v:0': Map first video stream.
+            - '-map 1:a:0': Map first audio stream.
+        - ProRes MOV:
+            - '-c:v prores': Use ProRes codec for video.
+            - '-profile:v 3': ProRes 422 HQ profile.
+            - '-c:a pcm_s16le': Use PCM audio codec with 16-bit little-endian samples.
+
+        The constructed commands are stored in instance variables:
+        - self.ffmpeg_lossless_cmd
+        - self.ffmpeg_h264_cmd_direct
+        - self.ffmpeg_prores_cmd
+        - self.ffmpeg_h264_cmd
         """
         base_filename = os.path.basename(self.images_path)
         prefix = re.match(r'^\D*', base_filename).group()
@@ -886,6 +927,38 @@ class Smelt(QWidget):
     def construct_mxf_mov_commands(self):
         """
         Construct FFmpeg commands for MXF and MOV file processing.
+
+        This method constructs FFmpeg commands to process MXF and MOV files into lossless MOV,
+        H.264 MP4, and ProRes MOV formats.
+
+        Commands:
+        - ffmpeg_base: Base FFmpeg command.
+        - ffmpeg_video_audio: Input video and optionally audio file.
+        - ffmpeg_audio_param: Parameters for audio encoding.
+
+        Output Commands:
+        - Lossless MOV:
+            - '-qp 0': Lossless quality.
+            - '-c:a copy': Copy audio codec without re-encoding.
+        - ProRes MOV:
+            - '-c:v prores': Use ProRes codec for video.
+            - '-profile:v 3': ProRes 422 HQ profile.
+            - '-pix_fmt yuv422p10le': 10-bit YUV 4:2:2 pixel format.
+            - '-vf scale=-2:1080': Scale video to 1080p while preserving aspect ratio.
+            - '-c:a pcm_s16le': Use PCM audio codec with 16-bit little-endian samples.
+        - H.264 MP4:
+            - '-c:v libx264': Use H.264 codec for video.
+            - '-pix_fmt yuv420p': Pixel format.
+            - '-preset slow': Encoding speed/quality tradeoff.
+            - '-crf 21': Constant rate factor for quality control.
+            - '-ac 2': Set number of audio channels to 2.
+            - '-b:a 224k': Audio bitrate.
+
+        The constructed commands are stored in instance variables:
+        - self.ffmpeg_dcp_cmd
+        - self.ffmpeg_dcp_prores
+        - self.ffmpeg_dcp_h264_cmd
+        - self.ffmpeg_h264_from_prores_cmd
         """
         ffmpeg_base = [ffmpeg_path, ]
 
@@ -940,6 +1013,23 @@ class Smelt(QWidget):
     def construct_audio_commands(self):
         """
         Construct FFmpeg commands for audio file processing.
+
+        This method constructs FFmpeg commands to process audio files into AAC and PCM formats.
+
+        Commands:
+        - ffmpeg_audio_cmd: Command to convert audio to AAC format.
+            - '-i': Input audio file.
+            - '-c:a aac': Use AAC codec for audio.
+            - '-b:a 192k': Audio bitrate.
+            - '-vn': Disable video.
+        - ffmpeg_lossless_audio_cmd: Command to convert audio to PCM format.
+            - '-i': Input audio file.
+            - '-c:a pcm_s16le': Use PCM audio codec with 16-bit little-endian samples.
+            - '-vn': Disable video.
+
+        The constructed commands are stored in instance variables:
+        - self.ffmpeg_audio_cmd
+        - self.ffmpeg_lossless_audio_cmd
         """
         self.ffmpeg_audio_cmd = [
             ffmpeg_path,
