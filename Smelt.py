@@ -5,11 +5,6 @@ This application provides functionalities for:
 - Selecting and processing video and audio files
 - Combining multichannel audio files
 - Converting and processing video files using FFmpeg
-
-Usage:
-1. Run `setup.sh` or `setup.bat` to set up the environment.
-2. Use the GUI to select files and start processing.
-
 """
 import glob
 import platform
@@ -18,6 +13,7 @@ import re
 import subprocess
 import sys
 import os
+import tempfile
 import threading
 import time
 
@@ -26,38 +22,36 @@ from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import *
 
 
+def setup():
+    """
+    Simple method for some initial setup or imports based on specific operating systems, or other variables
+    """
+    if platform.system() == 'Windows':
+        import resources_rc
+
+    if hasattr(QApplication, 'setAttribute'):
+        """
+        Enable high dpi scaling
+        """
+        QApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
+        QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps)
+
+
 def get_ffmpeg_path():
     """
-    Determines the path of the ffmpeg executable, whether the application runs bundled or in python environment.
-    Only for windows.
+    Determines the path of the ffmpeg executable, whether the application runs bundled or in a Python environment.
+    Only for Windows.
 
     Returns:
-        ffmpeg_path: path to the ffmpeg executable
+        str: Path to the ffmpeg executable.
     """
-    if getattr(sys, 'frozen', False):
-        path = os.path.join(sys._MEIPASS, 'ffmpeg.exe')
-        return path
+    if platform.system() == 'Windows':
+        if getattr(sys, 'frozen', False):
+            return tempfile.gettempdir().join('ffmpeg.exe')
+        else:
+            return os.path.join(os.path.dirname(__file__), 'resources', 'ffmpeg.exe')
     else:
-        return os.path.join(os.path.dirname(__file__), 'resources', 'ffmpeg.exe')
-
-
-if platform.system() == 'Windows':
-    """
-    Windows specific imports/settings
-    """
-    ffmpeg_path = get_ffmpeg_path()
-    import resources_rc
-
-else:
-    ffmpeg_path = 'ffmpeg'
-
-
-if hasattr(QApplication, 'setAttribute'):
-    """
-    Enable high dpi scaling
-    """
-    QApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
-    QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps)
+        return 'ffmpeg'
 
 
 def create_file_selection_box(text, buttons):
@@ -163,6 +157,7 @@ class Smelt(QWidget):
         super(Smelt, self).__init__()
 
         # Initialize paths and filenames
+        self.process = None
         self.process_terminated = None
         self.ffmpeg_hardware_accel = None
         self.ffmpeg_dcp_prores = None
@@ -607,18 +602,6 @@ class Smelt(QWidget):
 
         self.toggle_execute_button()
 
-    def drop_down_list_fix(self):
-        """
-        Attempt to fix the dropdown box styling.
-        """
-        view = self.fpsCounter.view()
-        if self.fpsCounter.currentIndex() % 2 == 0:
-            view.setStyleSheet("border: 2px solid gray;")
-        else:
-            view.setStyleSheet("border: 2px solid red;")
-        view.updateGeometry()
-        view.update()
-
     def determine_file_type(self):
         """
         Determine the file type based on the mappe_input_field text.
@@ -795,8 +778,10 @@ class Smelt(QWidget):
 
         This method changes the button text and disconnects the current click event handler,
         then connects the appropriate handler based on the current state:
-        - When the button text is 'Kjør' (Run), it changes to 'Avbryt' (Abort) and connects the button to the abort method.
-        - When the button text is 'Avbryt' (Abort), it changes to 'Kjør' (Run) and connects the button to the run_smelt method.
+        - When the button text is 'Kjør' (Run),
+         it changes to 'Avbryt' (Abort) and connects the button to the abort method.
+        - When the button text is 'Avbryt' (Abort),
+         it changes to 'Kjør' (Run) and connects the button to the run_smelt method.
         """
         if self.execButton.text() == 'Kjør':
             self.execButton.setText('Avbryt')
@@ -814,7 +799,8 @@ class Smelt(QWidget):
 
         This method shows a confirmation dialog to the user. If the user confirms, it attempts to terminate the
         ongoing FFmpeg process. Any exception during the termination is caught and displayed as a critical error.
-        Upon successful termination or if the process was aborted, an appropriate message is appended to the output text area.
+        Upon successful termination or if the process was aborted,
+         an appropriate message is appended to the output text area.
         """
         reply = QMessageBox.question(self, 'Bekreft avbrytelse',
                                      'Er du sikker på at du vil avbryte prosessen?',
@@ -1230,6 +1216,8 @@ class Smelt(QWidget):
         return True
 
 
+setup()
+ffmpeg_path = get_ffmpeg_path()
 app = QApplication(sys.argv)
 app.setStyle('Breeze')
 
