@@ -191,6 +191,7 @@ class Smelt(QWidget):
 
         # Initialize UI elements
         self.filLabel = None
+        self.cuda_indicator = None
         self.mappeLabel = None
         self.fpsLabel = None
         self.inkluderLydCheckBox = None
@@ -220,6 +221,7 @@ class Smelt(QWidget):
         self.create_text_output()
         self.create_combobox()
         self.create_progressbar()
+        self.create_cuda_indicator()
         self.setup_layout()
         self.set_default_states()
         self.designate_button_methods()
@@ -274,6 +276,19 @@ class Smelt(QWidget):
         self.fpsCounter.view().parentWidget().setMaximumHeight(200)
         self.fpsCounter.setMaximumSize(50, 30)
 
+    def create_cuda_indicator(self):
+        """
+        Create an indicator light to show the status of the CUDA check.
+        """
+        self.cuda_indicator = QLabel(self)
+        self.cuda_indicator.setFixedSize(20, 20)
+        if cuda_available():
+            self.cuda_indicator.setStyleSheet("background-color: green; border-radius: 10px;")
+            self.cuda_indicator.setToolTip("CUDA is available!")
+        else:
+            self.cuda_indicator.setStyleSheet("background-color: red; border-radius: 10px;")
+            self.cuda_indicator.setToolTip("CUDA not available!")
+
     def create_text_output(self):
         """
         Create a text output area for logs.
@@ -313,6 +328,7 @@ class Smelt(QWidget):
         layout.addWidget(self.progress_bar, 10, 0, 1, 4)
         layout.addWidget(self.execButton, 10, 4)
         layout.addWidget(self.step_label, 11, 0, 1, 5)
+        layout.addWidget(self.cuda_indicator, 6, 4)
         self.setLayout(layout)
 
     def set_default_states(self):
