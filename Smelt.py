@@ -885,6 +885,9 @@ class Smelt(QWidget):
         """
         base_filename = os.path.basename(self.images_path)
         prefix = re.match(r'^\D*', base_filename).group()
+    
+        start_number = extract_number(self.images_path)
+
         ffmpeg_input_pattern = os.path.join(self.folder_path, '{}%06d.dpx'.format(prefix))
 
         self.ffmpeg_base = [
@@ -897,7 +900,7 @@ class Smelt(QWidget):
             '-f', 'image2',
             '-vsync', '0',
             '-framerate', self.fps,
-            '-start_number', '0',
+            '-start_number', str(start_number),
             '-i', ffmpeg_input_pattern,
         ]
 
