@@ -1,9 +1,6 @@
 name: Build with PyInstaller and Create Release
 
 on:
-  push:
-    branches:
-      - master
   pull_request:
     branches:
       - master
