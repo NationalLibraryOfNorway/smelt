@@ -16,9 +16,10 @@ import os
 import threading
 import time
 
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QIcon
+
+from PyQt5.QtGui import QIcon, QPixmap
 from PyQt5.QtWidgets import *
+from PyQt5.QtCore import Qt
 
 
 def setup():
@@ -138,7 +139,7 @@ def cuda_available():
             result = subprocess.run(['nvidia-smi'], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                     universal_newlines=True)
             if result.returncode == 0:
-                return True
+                return False # Should be set to true, currently temporarily disabled
         return False
     except FileNotFoundError:
         return False
@@ -155,7 +156,9 @@ class Smelt(QWidget):
     def __init__(self):
         super(Smelt, self).__init__()
 
-        # Initialize paths and filenames
+        """
+        Initialize paths and filenames
+        """
         self.process = None
         self.process_terminated = None
         self.ffmpeg_hardware_accel = None
@@ -172,7 +175,6 @@ class Smelt(QWidget):
         self.ffmpeg_h264_cmd_direct = None
         self.ffmpeg_lossless_cmd = None
         self.ffmpeg_base = None
-        self.step_label = None
         self.images_path = None
         self.proceed_prores = None
         self.proceed_lossless = None
@@ -189,8 +191,11 @@ class Smelt(QWidget):
         self.folder_path = None
         self.film_file_path = None
 
-        # Initialize UI elements
+        """
+        Initialize UI elements
+        """
         self.filLabel = None
+        self.step_label = None
         self.cuda_indicator = None
         self.mappeLabel = None
         self.fpsLabel = None
@@ -281,13 +286,43 @@ class Smelt(QWidget):
         Create an indicator light to show the status of the CUDA check.
         """
         self.cuda_indicator = QLabel(self)
-        self.cuda_indicator.setFixedSize(20, 20)
+        self.cuda_indicator.setFixedSize(22, 22)  # Increase size to include space for border and padding
+
+        icon_path = "resources/cuda.png"  # Replace with the path to your icon file
+        pixmap = QPixmap(icon_path).scaled(20, 20, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+
         if cuda_available():
-            self.cuda_indicator.setStyleSheet("background-color: green; border-radius: 10px;")
+            self.cuda_indicator.setStyleSheet("""
+                QLabel { 
+                    background-color: green; 
+                    border: 4px solid green; 
+                    padding: 18px; 
+                    border-radius: 6px; 
+                    font-size: 12px;  /* Adjust the font size to make the tooltip smaller */
+                }
+                QLabel[toolTip] { 
+                    font-size: 12px;  /* Adjust the font size to make the tooltip smaller */
+                }
+            """)
             self.cuda_indicator.setToolTip("CUDA is available!")
         else:
-            self.cuda_indicator.setStyleSheet("background-color: red; border-radius: 10px;")
+            self.cuda_indicator.setStyleSheet("""
+                QLabel { 
+                    background-color: red; 
+                    border: 4px solid red; 
+                    padding: 18px; 
+                    border-radius: 6px; 
+                    font-size: 12px;  /* Adjust the font size to make the tooltip smaller */
+                }
+                QLabel[toolTip] { 
+                    font-size: 12px;  /* Adjust the font size to make the tooltip smaller */
+                }
+            """)
             self.cuda_indicator.setToolTip("CUDA not available!")
+
+        self.cuda_indicator.setPixmap(pixmap)
+        self.cuda_indicator.setAlignment(Qt.AlignCenter)
+        self.cuda_indicator.setToolTipDuration(0)
 
     def create_text_output(self):
         """
