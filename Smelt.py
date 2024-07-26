@@ -403,28 +403,12 @@ class Smelt(QWidget):
         dialog = QFileDialog()
 
         def select_mappe():
-            """
-            Open a file selection dialog that shows both folders and files, allowing the user to select a folder.
-            """
             self.check_box_logic('')
-            options = QFileDialog.Options()
-            options |= QFileDialog.DontUseNativeDialog
-
-            file_dialog = QFileDialog()
-            file_dialog.setFileMode(QFileDialog.AnyFile)
-            file_dialog.setOption(QFileDialog.ShowDirsOnly, False)
-            file_dialog.setViewMode(QFileDialog.Detail)
-            file_dialog.setDirectory(os.path.expanduser('~'))
-
-            if file_dialog.exec_() == QFileDialog.Accepted:
-                selected_path = file_dialog.selectedFiles()[0]
-                if os.path.isdir(selected_path):
-                    self.folder_path = selected_path
-                else:
-                    self.folder_path = os.path.dirname(selected_path)
-
-                self.mappe_input_field.setText(self.folder_path)
-                self.mappe_sok(self.folder_path)
+            folder_path = dialog.getExistingDirectory(None, "Velg Mappe")
+            if folder_path:
+                self.folder_path = folder_path
+                self.mappe_input_field.setText(folder_path)
+                self.mappe_sok(folder_path)
 
         def select_film():
             self.check_box_logic('')
