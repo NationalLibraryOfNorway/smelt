@@ -17,7 +17,7 @@ import threading
 import time
 
 
-from PyQt5.QtGui import QIcon, QPixmap
+from PyQt5.QtGui import QIcon, QPixmap, QPalette, QFont, QColor
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import Qt
 
@@ -35,6 +35,17 @@ def setup():
         """
         QApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
         QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps)
+
+
+def customize_tooltips():
+    """
+    Customize the appearance of tooltips to make them look more dim/transparent.
+    """
+    palette = QToolTip.palette()
+    palette.setColor(QPalette.ToolTipBase, QColor(50, 50, 50, 180))
+    palette.setColor(QPalette.ToolTipText, QColor(255, 255, 255, 180))
+    QToolTip.setPalette(palette)
+    QToolTip.setFont(QFont('SansSerif', 10))
 
 
 def get_ffmpeg_path():
@@ -270,6 +281,12 @@ class Smelt(QWidget):
         self.filButton = QPushButton('Velg lydfil...', self)
         self.execButton = QPushButton('Kjør', self)
 
+        self.mappeButton.setToolTip('Velg en mappe med .dpx-er, .mxf eller .mov filer.')
+        self.filmButton.setToolTip('Velg en .mxf eller en .mov fil.')
+        self.filButton.setToolTip('Velg en lydfil.')
+        self.execButton.setToolTip('Start konverteringen.')
+        customize_tooltips()
+
     def create_combobox(self):
         """
         Create a combobox for FPS selection.
@@ -304,7 +321,7 @@ class Smelt(QWidget):
                     font-size: 12px;  /* Adjust the font size to make the tooltip smaller */
                 }
             """)
-            self.cuda_indicator.setToolTip("CUDA is available!")
+            self.cuda_indicator.setToolTip("CUDA Hardware Akselerasjon Tilgjengelig.")
         else:
             self.cuda_indicator.setStyleSheet("""
                 QLabel { 
@@ -318,7 +335,7 @@ class Smelt(QWidget):
                     font-size: 12px;  /* Adjust the font size to make the tooltip smaller */
                 }
             """)
-            self.cuda_indicator.setToolTip("CUDA not available!")
+            self.cuda_indicator.setToolTip("CUDA Hardware Akselerasjon IKKE Tilgjengelig.")
 
         self.cuda_indicator.setPixmap(pixmap)
         self.cuda_indicator.setAlignment(Qt.AlignCenter)
