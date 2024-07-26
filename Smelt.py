@@ -403,12 +403,23 @@ class Smelt(QWidget):
         dialog = QFileDialog()
 
         def select_mappe():
+            """
+            Open a file selection dialog that shows both folders and files, allowing the user to select a folder.
+            """
             self.check_box_logic('')
-            folder_path = dialog.getExistingDirectory(None, "Velg Mappe")
-            if folder_path:
-                self.folder_path = folder_path
-                self.mappe_input_field.setText(folder_path)
-                self.mappe_sok(folder_path)
+            options = QFileDialog.Options()
+            options |= QFileDialog.ShowDirsOnly | QFileDialog.DontResolveSymlinks
+            file_dialog = QFileDialog()
+            file_dialog.setFileMode(QFileDialog.DirectoryOnly)
+            file_dialog.setOption(QFileDialog.ShowDirsOnly, False)
+            file_dialog.setViewMode(QFileDialog.Detail)
+
+            if file_dialog.exec_() == QFileDialog.Accepted:
+                folder_path = file_dialog.selectedFiles()[0]
+                if folder_path:
+                    self.folder_path = folder_path
+                    self.mappe_input_field.setText(folder_path)
+                    self.mappe_sok(folder_path)
 
         def select_film():
             self.check_box_logic('')
@@ -836,7 +847,10 @@ class Smelt(QWidget):
         Handle audio processing operations.
         """
         self.construct_audio_commands()
-        self.execute_ffmpeg_commands(['ffmpeg_lossless_audio_cmd', 'ffmpeg_audio_cmd'])
+        if self.mezzaninfilCheckBox.isChecked():
+            self.execute_ffmpeg_commands(['ffmpeg_lossless_audio_cmd', 'ffmpeg_audio_cmd'])
+        else:
+            self.execute_ffmpeg_commands(['ffmpeg_audio_cmd'])
 
     def construct_dpx_commands(self):
         """
@@ -885,7 +899,7 @@ class Smelt(QWidget):
         """
         base_filename = os.path.basename(self.images_path)
         prefix = re.match(r'^\D*', base_filename).group()
-    
+
         start_number = extract_number(self.images_path)
 
         ffmpeg_input_pattern = os.path.join(self.folder_path, '{}%06d.dpx'.format(prefix))
