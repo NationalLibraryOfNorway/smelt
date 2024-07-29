@@ -102,6 +102,8 @@ class Smelt(QWidget):
         GUI.create_combobox(self)
         GUI.create_progressbar(self)
         GUI.create_cuda_indicator(self)
+        GUI.create_ffmpeg_indicator(self)
+        GUI.create_empty_indicator(self)
         GUI.setup_layout(self)
         GUI.set_default_states(self)
         GUI.designate_button_methods(self)

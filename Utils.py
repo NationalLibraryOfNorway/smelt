@@ -1,9 +1,11 @@
 import platform
 import re
+import shutil
 import subprocess
 import sys
 import os
-
+import tempfile
+import zipfile
 
 from PyQt5.QtGui import QIcon, QPixmap, QPalette, QFont, QColor
 from PyQt5.QtWidgets import *
@@ -36,21 +38,69 @@ def customize_tooltips():
     QToolTip.setFont(QFont('SansSerif', 10))
 
 
-def get_ffmpeg_path():
+def get_ffmpeg_path(include_packaged_version=False):
     """
     Determines the path of the ffmpeg executable, whether the application runs bundled or in a Python environment.
-    Only for Windows.
+    Checks for a newer version of ffmpeg installed on the computer and uses it if available.
+
+    Args:
+        include_packaged_version (bool): Whether to return a boolean indicating if the packaged version was used.
 
     Returns:
-        str: Path to the ffmpeg executable.
+        tuple: A tuple containing the path to the ffmpeg executable and a boolean indicating if the packaged version was used.
     """
+
+    def get_version(ffmpeg_path):
+        """
+        Get the version of the ffmpeg executable.
+
+        Args:
+            ffmpeg_path (str): The path to the ffmpeg executable.
+
+        Returns:
+            tuple: A tuple containing the version numbers, or None if the version couldn't be determined.
+        """
+        try:
+            result = subprocess.run([ffmpeg_path, '-version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            version_line = result.stdout.split('\n')[0]
+            # print(f"FFmpeg version output: {result.stdout}")
+            version = version_line.split()[2]
+            version_numbers = tuple(map(int, (version.split('-')[0]).split('.')))
+            return version_numbers
+        except Exception as e:
+            # print(f"Error getting FFmpeg version: {e}")
+            return None
+
+    installed_ffmpeg_path = 'ffmpeg'
+
     if platform.system() == 'Windows':
         if getattr(sys, 'frozen', False):
-            return os.path.join(sys._MEIPASS, 'ffmpeg.exe')
+            packaged_ffmpeg_path = os.path.join(sys._MEIPASS, 'ffmpeg.exe')
         else:
-            return os.path.join(os.path.dirname(__file__), 'resources', 'ffmpeg.exe')
+            zip_path = os.path.join(os.path.dirname(__file__), 'resources', 'ffmpeg.zip')
+            extract_dir = tempfile.mkdtemp()
+            with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+                zip_ref.extract('ffmpeg.exe', extract_dir)
+            packaged_ffmpeg_path = os.path.join(extract_dir, 'ffmpeg.exe')
     else:
-        return 'ffmpeg'
+        packaged_ffmpeg_path = None
+
+    packaged_version = get_version(packaged_ffmpeg_path) if packaged_ffmpeg_path else None
+    installed_version = get_version(installed_ffmpeg_path)
+
+    if installed_version and packaged_version:
+        if installed_version > packaged_version:
+            if platform.system() == 'Windows' and not getattr(sys, 'frozen', False):
+                shutil.rmtree(extract_dir)
+            return (installed_ffmpeg_path, False) if include_packaged_version else installed_ffmpeg_path
+        else:
+            return (packaged_ffmpeg_path, True) if include_packaged_version else packaged_ffmpeg_path
+    elif installed_version:
+        return (installed_ffmpeg_path, False) if include_packaged_version else installed_ffmpeg_path
+    elif packaged_ffmpeg_path:
+        return (packaged_ffmpeg_path, True) if include_packaged_version else packaged_ffmpeg_path
+    else:
+        return (None, None) if include_packaged_version else None
 
 
 def create_file_selection_box(text, buttons):

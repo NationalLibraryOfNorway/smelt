@@ -80,7 +80,10 @@ def create_cuda_indicator(self):
     self.cuda_indicator = QLabel(self)
     self.cuda_indicator.setFixedSize(22, 22)  # Increase size to include space for border and padding
 
-    icon_path = ":/cuda.png"
+    if platform.system() == 'Windows':
+        icon_path = ":/cuda.png"
+    else:
+        icon_path = "resources/cuda.png"
     pixmap = QPixmap(icon_path).scaled(20, 20, Qt.KeepAspectRatio, Qt.SmoothTransformation)
 
     if Utils.cuda_available():
@@ -117,6 +120,116 @@ def create_cuda_indicator(self):
     self.cuda_indicator.setToolTipDuration(0)
 
 
+def create_ffmpeg_indicator(self):
+    """
+    Create an indicator light to show the status of the CUDA check.
+    """
+    self.ffmpeg_indicator = QLabel(self)
+    self.ffmpeg_indicator.setFixedSize(22, 22)  # Increase size to include space for border and padding
+
+    if platform.system() == 'Windows':
+        icon_path = ":/ffmpeg.png"
+    else:
+        icon_path = "resources/ffmpeg.png"
+    pixmap = QPixmap(icon_path).scaled(20, 20, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+
+    ffmpeg_path, is_packaged_version = Utils.get_ffmpeg_path(include_packaged_version=True)
+
+    if is_packaged_version:
+        self.ffmpeg_indicator.setStyleSheet("""
+                QLabel { 
+                    background-color: green; 
+                    border: 4px solid green; 
+                    padding: 18px; 
+                    border-radius: 6px; 
+                    font-size: 12px;  /* Adjust the font size to make the tooltip smaller */
+                }
+                QLabel[toolTip] { 
+                    font-size: 12px;  /* Adjust the font size to make the tooltip smaller */
+                }
+            """)
+        self.ffmpeg_indicator.setToolTip("Medpakket versjon av FFmpeg.")
+    elif is_packaged_version is None:
+        self.ffmpeg_indicator.setStyleSheet("""
+                QLabel { 
+                    background-color: red; 
+                    border: 4px solid red; 
+                    padding: 18px; 
+                    border-radius: 6px; 
+                    font-size: 12px;  /* Adjust the font size to make the tooltip smaller */
+                }
+                QLabel[toolTip] { 
+                    font-size: 12px;  /* Adjust the font size to make the tooltip smaller */
+                }
+            """)
+        self.ffmpeg_indicator.setToolTip("Ingen versjon av FFmpeg funnet.")
+    else:
+        self.ffmpeg_indicator.setStyleSheet("""
+                QLabel { 
+                    background-color: blue; 
+                    border: 4px solid blue; 
+                    padding: 18px; 
+                    border-radius: 6px; 
+                    font-size: 12px;  /* Adjust the font size to make the tooltip smaller */
+                }
+                QLabel[toolTip] { 
+                    font-size: 12px;  /* Adjust the font size to make the tooltip smaller */
+                }
+            """)
+        self.ffmpeg_indicator.setToolTip("Lokal versjon av FFmpeg.")
+
+    self.ffmpeg_indicator.setPixmap(pixmap)
+    self.ffmpeg_indicator.setAlignment(Qt.AlignCenter)
+    self.ffmpeg_indicator.setToolTipDuration(0)
+
+
+def create_empty_indicator(self):
+    """
+    Create an indicator light to show the status of the (empty) check.
+    """
+    self.empty_indicator = QLabel(self)
+    self.empty_indicator.setFixedSize(22, 22)  # Increase size to include space for border and padding
+
+    # if platform.system() == 'Windows':
+    #     icon_path = ":/cuda.png"
+    # else:
+    #     icon_path = "resources/cuda.png"
+    # pixmap = QPixmap(icon_path).scaled(20, 20, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+    #
+    # if Utils.cuda_available():
+    #     self.empty_indicator.setStyleSheet("""
+    #             QLabel {
+    #                 background-color: green;
+    #                 border: 4px solid green;
+    #                 padding: 18px;
+    #                 border-radius: 6px;
+    #                 font-size: 12px;  /* Adjust the font size to make the tooltip smaller */
+    #             }
+    #             QLabel[toolTip] {
+    #                 font-size: 12px;  /* Adjust the font size to make the tooltip smaller */
+    #             }
+    #         """)
+    #     self.empty_indicator.setToolTip("CUDA Hardware Akselerasjon Tilgjengelig.")
+    # else:
+    #     self.empty_indicator.setStyleSheet("""
+    #             QLabel {
+    #                 background-color: red;
+    #                 border: 4px solid red;
+    #                 padding: 18px;
+    #                 border-radius: 6px;
+    #                 font-size: 12px;  /* Adjust the font size to make the tooltip smaller */
+    #             }
+    #             QLabel[toolTip] {
+    #                 font-size: 12px;  /* Adjust the font size to make the tooltip smaller */
+    #             }
+    #         """)
+    #     self.empty_indicator.setToolTip("CUDA Hardware Akselerasjon IKKE Tilgjengelig.")
+    #
+    # self.empty_indicator.setPixmap(pixmap)
+    self.empty_indicator.setAlignment(Qt.AlignCenter)
+    self.empty_indicator.setToolTipDuration(0)
+
+
 def create_text_output(self):
     """
     Create a text output area for logs.
@@ -140,6 +253,12 @@ def setup_layout(self):
     self.mappe_input_field = QLineEdit(self)
     self.fil_input_field = QLineEdit(self)
 
+    indicators_layout = QHBoxLayout()
+    indicators_layout.addWidget(self.cuda_indicator)
+    indicators_layout.addWidget(self.ffmpeg_indicator)
+    indicators_layout.addWidget(self.empty_indicator)
+    indicators_layout.setSpacing(0)
+
     layout = QGridLayout()
     layout.addWidget(self.mappeLabel, 0, 0)
     layout.addWidget(self.mappe_input_field, 0, 1, 1, 3)
@@ -158,7 +277,8 @@ def setup_layout(self):
     layout.addWidget(self.progress_bar, 10, 0, 1, 4)
     layout.addWidget(self.execButton, 10, 4)
     layout.addWidget(self.step_label, 11, 0, 1, 5)
-    layout.addWidget(self.cuda_indicator, 6, 4)
+    layout.addLayout(indicators_layout, 6, 4)
+
     self.setLayout(layout)
 
 

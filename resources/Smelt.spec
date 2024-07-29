@@ -8,6 +8,7 @@ a = Analysis(
     datas=[
     ('../resources/icon.ico', 'icons'),
     ('../resources/cuda.png', 'icons'),
+    ('../resources/ffmpeg.png', 'icons'),
     ('../resources/ffmpeg.exe', '.')
     ],
     hiddenimports=[],
