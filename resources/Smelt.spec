@@ -29,32 +29,30 @@ a = Analysis(
 )
 
 pyz = PYZ(a.pure)
-
 if is_windows:
-exe = EXE(
-    pyz,
-    a.scripts,
-    a.binaries,
-    a.datas,
-    [],
-    name='Smelt',
-    debug=False,
-    bootloader_ignore_signals=False,
-    strip=False,
-    upx=True,
-    upx_exclude=[],
-    runtime_tmpdir=None,
-    console=False,
-    disable_windowed_traceback=False,
-    argv_emulation=False,
-    target_arch=None,
-    codesign_identity=None,
-    entitlements_file=None,
-    icon='../resources/icon.ico' if is_windows else None,
-    version='../resources/version.txt' if is_windows else None,
-)
+    exe = EXE(
+        pyz,
+        a.scripts,
+        a.binaries,
+        a.datas,
+        [],
+        name='Smelt',
+        debug=False,
+        bootloader_ignore_signals=False,
+        strip=False,
+        upx=True,
+        upx_exclude=[],
+        runtime_tmpdir=None,
+        console=False,
+        disable_windowed_traceback=False,
+        argv_emulation=False,
+        target_arch=None,
+        codesign_identity=None,
+        entitlements_file=None,
+        icon='../resources/icon.ico' if is_windows else None,
+        version='../resources/version.txt' if is_windows else None,
+    )
 
-# If you have different settings for Linux, you can add them below
 if is_linux:
     exe = EXE(
         pyz,
