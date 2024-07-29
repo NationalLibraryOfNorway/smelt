@@ -5,7 +5,6 @@
 <qresource prefix="/">
     <file>cuda.png</file>
   </qresource>
-</RCC>
 <qresource prefix="/">
     <file>ffmpeg.png</file>
   </qresource>
