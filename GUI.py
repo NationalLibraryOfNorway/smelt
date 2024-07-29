@@ -80,7 +80,7 @@ def create_cuda_indicator(self):
     self.cuda_indicator = QLabel(self)
     self.cuda_indicator.setFixedSize(22, 22)  # Increase size to include space for border and padding
 
-    icon_path = "resources/cuda.png"  # Replace with the path to your icon file
+    icon_path = ":/cuda.png"
     pixmap = QPixmap(icon_path).scaled(20, 20, Qt.KeepAspectRatio, Qt.SmoothTransformation)
 
     if Utils.cuda_available():
