@@ -2,7 +2,7 @@
 
 
 a = Analysis(
-    ['../Smelt.py', '../resources/resources_rc.py'],
+    ['../Smelt.py', '../GUI.py', '../ffmpeg_commands.py', '../Utils.py', '../resources/resources_rc.py'],
     pathex=['..'],
     binaries=[],
     datas=[
