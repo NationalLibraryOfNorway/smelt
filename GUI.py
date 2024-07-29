@@ -138,8 +138,8 @@ def create_ffmpeg_indicator(self):
     if is_packaged_version:
         self.ffmpeg_indicator.setStyleSheet("""
                 QLabel { 
-                    background-color: green; 
-                    border: 4px solid green; 
+                    background-color: blue; 
+                    border: 4px solid blue; 
                     padding: 18px; 
                     border-radius: 6px; 
                     font-size: 12px;  /* Adjust the font size to make the tooltip smaller */
@@ -166,8 +166,8 @@ def create_ffmpeg_indicator(self):
     else:
         self.ffmpeg_indicator.setStyleSheet("""
                 QLabel { 
-                    background-color: blue; 
-                    border: 4px solid blue; 
+                    background-color: green; 
+                    border: 4px solid green; 
                     padding: 18px; 
                     border-radius: 6px; 
                     font-size: 12px;  /* Adjust the font size to make the tooltip smaller */
