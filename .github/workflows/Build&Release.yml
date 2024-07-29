@@ -78,7 +78,7 @@ jobs:
     - name: Build with PyInstaller (Linux)
       if: matrix.os == 'ubuntu-latest'
       run: |
-        pyinstaller --onefile Smelt.py # Use direct command for Linux build
+        pyinstaller resources/Smelt.spec  # Use the spec file
         ls -al dist  # List contents of dist directory for debugging
 
     - name: Set executable permission and create tarball for Linux artifact
