@@ -16,7 +16,8 @@ Smelt is a GUI application built using PyQt5 for video and audio processing. The
    - Go to the [Releases](https://github.com/NationalLibraryOfNorway/smelt/releases) page of the Smelt GitHub repository.
    - Download the `Smelt.exe` file from the latest release.
 
-2. **Install FFmpeg:**
+2. **Install FFmpeg(Optional):**
+   - FFmpeg is included in the Smelt.exe file, but can also be installed manually. Smelt will always use the newest version available.
    - Go to the [FFmpeg Download](https://ffmpeg.org/download.html) page.
    - Download the FFmpeg build for Windows.
    - Extract the contents of the downloaded archive to a folder of your choice (e.g., `C:\ffmpeg`).
