@@ -1,32 +1,21 @@
 # -*- mode: python ; coding: utf-8 -*-
 import sys
 import platform
-import os
 
 is_windows = platform.system() == 'Windows'
 is_linux = platform.system() == 'Linux'
 
-pathex = ['..']
-resources_path = os.path.join('..', 'resources')
-
 datas = [
-    (os.path.join(resources_path, 'icon.ico'), 'icons'),
-    (os.path.join(resources_path, 'cuda.png'), 'icons'),
-    (os.path.join(resources_path, 'ffmpeg.png'), 'icons'),
+    ('../resources/icon.ico', 'icons'),
+    ('../resources/cuda.png', 'icons'),
+    ('../resources/ffmpeg.png', 'icons'),
 ]
 
 if is_windows:
-    datas.append((os.path.join(resources_path, 'ffmpeg.exe'), '.'))
-
+    datas.append(('../resources/ffmpeg.exe', '.'))
 
 a = Analysis(
-    [
-        os.path.join('..', 'Smelt.py'),
-        os.path.join('..', 'GUI.py'),
-        os.path.join('..', 'ffmpeg_commands.py'),
-        os.path.join('..', 'Utils.py'),
-        os.path.join(resources_path, 'resources_rc.py')
-    ],
+    ['../Smelt.py', '../GUI.py', '../ffmpeg_commands.py', '../Utils.py', '../resources/resources_rc.py'],
     pathex=['..'],
     binaries=[],
     datas=datas,
@@ -75,16 +64,14 @@ if is_linux:
         name='Smelt',
         debug=False,
         bootloader_ignore_signals=False,
-        strip=True,  # Usually strip binaries on Linux
+        strip=False,
         upx=True,
         upx_exclude=[],
         runtime_tmpdir=None,
-        console=True,  # Use console for debugging
+        console=True,
         disable_windowed_traceback=False,
         argv_emulation=False,
         target_arch=None,
         codesign_identity=None,
         entitlements_file=None,
-        icon=None,  # Update this if you have a Linux icon
-        version=None,
     )
