@@ -2,6 +2,8 @@ import glob
 import platform
 import re
 import os
+import sys
+
 import Utils
 
 from PyQt5.QtGui import QIcon, QPixmap, QPalette, QFont, QColor
@@ -80,7 +82,7 @@ def create_cuda_indicator(self):
     self.cuda_indicator = QLabel(self)
     self.cuda_indicator.setFixedSize(22, 22)  # Increase size to include space for border and padding
 
-    if platform.system() == 'Windows':
+    if getattr(sys, 'frozen', False):
         icon_path = ":/cuda.png"
     else:
         icon_path = "resources/cuda.png"
@@ -127,7 +129,7 @@ def create_ffmpeg_indicator(self):
     self.ffmpeg_indicator = QLabel(self)
     self.ffmpeg_indicator.setFixedSize(22, 22)  # Increase size to include space for border and padding
 
-    if platform.system() == 'Windows':
+    if getattr(sys, 'frozen', False):
         icon_path = ":/ffmpeg.png"
     else:
         icon_path = "resources/ffmpeg.png"

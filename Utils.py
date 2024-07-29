@@ -63,12 +63,10 @@ def get_ffmpeg_path(include_packaged_version=False):
         try:
             result = subprocess.run([ffmpeg_path, '-version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
             version_line = result.stdout.split('\n')[0]
-            # print(f"FFmpeg version output: {result.stdout}")
             version = version_line.split()[2]
             version_numbers = tuple(map(int, (version.split('-')[0]).split('.')))
             return version_numbers
         except Exception as e:
-            # print(f"Error getting FFmpeg version: {e}")
             return None
 
     installed_ffmpeg_path = 'ffmpeg'
