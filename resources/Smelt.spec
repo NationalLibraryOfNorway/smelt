@@ -29,6 +29,7 @@ a = Analysis(
 )
 
 pyz = PYZ(a.pure)
+
 if is_windows:
     exe = EXE(
         pyz,
