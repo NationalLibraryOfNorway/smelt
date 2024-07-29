@@ -29,7 +29,6 @@ a = Analysis(
 )
 
 pyz = PYZ(a.pure)
-
 if is_windows:
     exe = EXE(
         pyz,
@@ -54,7 +53,6 @@ if is_windows:
         version='../resources/version.txt' if is_windows else None,
     )
 
-# If you have different settings for Linux, you can add them below
 if is_linux:
     exe = EXE(
         pyz,
