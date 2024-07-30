@@ -33,6 +33,7 @@ class Smelt(QWidget):
         """
         Initialize paths and filenames
         """
+        self.temp_mov = None
         self.process = None
         self.process_terminated = None
         self.ffmpeg_hardware_accel = None
@@ -430,6 +431,7 @@ class Smelt(QWidget):
         self.lossless_mov = os.path.join(folder_path, 'lossless', '{}.mov'.format(self.folder_name))
         self.prores_mov = os.path.join(folder_path, 'lossless', '{}_prores.mov'.format(self.folder_name))
         self.h264_mp4 = os.path.join(folder_path, 'lossless', 'nb-no_{}.mp4'.format(self.folder_name))
+        self.temp_mov = os.path.join(folder_path, 'lossless', 'temp_{}.mov'.format(self.folder_name))
 
         os.makedirs(os.path.join(folder_path, 'lossless'), exist_ok=True)
 
@@ -516,7 +518,11 @@ class Smelt(QWidget):
             ffmpeg_commands.construct_mxf_mov_commands(self)
 
         if filetype == 'mxf':
-            self.execute_ffmpeg_commands(['ffmpeg_dcp_cmd', 'ffmpeg_dcp_prores', 'ffmpeg_dcp_h264_cmd'])
+            if Utils.cuda_available():
+                self.execute_ffmpeg_commands(['ffmpeg_dcp_cmd', 'ffmpeg_convert',
+                                              'ffmpeg_dcp_prores', 'ffmpeg_dcp_h264_cmd'])
+            else:
+                self.execute_ffmpeg_commands(['ffmpeg_dcp_cmd', 'ffmpeg_dcp_prores', 'ffmpeg_dcp_h264_cmd'])
         elif filetype == 'mov':
             self.execute_ffmpeg_commands(['ffmpeg_h264_from_prores_cmd'])
         elif not self.mezzaninfilCheckBox.isChecked():
