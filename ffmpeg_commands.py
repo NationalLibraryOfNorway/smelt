@@ -113,7 +113,8 @@ def construct_dpx_commands(self):
             self.proceed_h264
         ]
 
-    self.ffmpeg_prores_cmd = self.ffmpeg_base + self.ffmpeg_hardware_accel + [
+    self.ffmpeg_prores_cmd = self.ffmpeg_base + [
+        '-hwaccel', 'auto',
         '-i', self.lossless_mov,
         '-vf', 'scale=-2:1080,format=yuv422p10le',
         '-c:v', 'prores',
