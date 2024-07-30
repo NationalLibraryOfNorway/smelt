@@ -67,6 +67,7 @@ def get_ffmpeg_path(include_packaged_version=False):
             version_numbers = tuple(map(int, (version.split('-')[0]).split('.')))
             return version_numbers
         except Exception as e:
+            print(e)
             return None
 
     installed_ffmpeg_path = 'ffmpeg'
