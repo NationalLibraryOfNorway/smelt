@@ -64,7 +64,9 @@ def get_ffmpeg_path(include_packaged_version=False):
             result = subprocess.run([ffmpeg_path, '-version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
             version_line = result.stdout.split('\n')[0]
             version = version_line.split()[2]
-            version_numbers = tuple(map(int, (version.split('-')[0]).split('.')))
+            version_parts = version.split('-')[0].split('.')
+            version_numbers = tuple(int(part) for part in version_parts if part.isdigit())
+
             return version_numbers
         except FileNotFoundError:
             print(f"FFmpeg executable not found at path: {ffmpeg_path}")
