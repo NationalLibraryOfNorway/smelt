@@ -16,7 +16,7 @@ def setup():
     """
     Simple method for some initial setup or imports based on specific operating systems, or other variables
     """
-    if platform.system() == 'Windows':
+    if getattr(sys, 'frozen', False):
         import resources_rc
 
     if hasattr(QApplication, 'setAttribute'):
