@@ -62,7 +62,7 @@ if is_linux:
         a.datas,
         [],
         name='Smelt',
-        debug=False,
+        debug=all,
         bootloader_ignore_signals=False,
         strip=False,
         upx=True,
