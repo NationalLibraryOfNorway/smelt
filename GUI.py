@@ -124,7 +124,8 @@ def create_cuda_indicator(self):
 
 def create_ffmpeg_indicator(self):
     """
-    Create an indicator light to show the status of the CUDA check.
+    Create an indicator to show the status of FFmpeg, and calls the method to use either the newest version of ffmpeg
+    or packaged version
     """
     self.ffmpeg_indicator = QLabel(self)
     self.ffmpeg_indicator.setFixedSize(22, 22)  # Increase size to include space for border and padding
@@ -136,6 +137,7 @@ def create_ffmpeg_indicator(self):
     pixmap = QPixmap(icon_path).scaled(20, 20, Qt.KeepAspectRatio, Qt.SmoothTransformation)
 
     ffmpeg_path, is_packaged_version = Utils.get_ffmpeg_path(include_packaged_version=True)
+    self.ffmpeg_path = ffmpeg_path
 
     if is_packaged_version:
         self.ffmpeg_indicator.setStyleSheet("""

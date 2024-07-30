@@ -64,7 +64,7 @@ class Smelt(QWidget):
         self.audio_file_path = None
         self.folder_path = None
         self.film_file_path = None
-        self.ffmpeg_path = ffmpeg_path
+        self.ffmpeg_path = None
 
         """
         Initialize UI elements
@@ -205,7 +205,7 @@ class Smelt(QWidget):
         proceed_combine = self.exist_check(combined_audio_file)
 
         ffmpeg_combine_audio_cmd = [
-            ffmpeg_path,
+            self.ffmpeg_path,
             '-i', matching_files['L'],
             '-i', matching_files['R'],
             '-i', matching_files['C'],
@@ -661,7 +661,6 @@ class Smelt(QWidget):
 
 
 Utils.setup()
-ffmpeg_path = Utils.get_ffmpeg_path()
 app = QApplication(sys.argv)
 app.setStyle('Breeze')
 
