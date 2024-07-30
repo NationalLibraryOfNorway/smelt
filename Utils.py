@@ -191,7 +191,7 @@ def cuda_available():
             result = subprocess.run(['nvidia-smi'], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                     universal_newlines=True)
             if result.returncode == 0:
-                return False # Should be set to true, currently temporarily disabled
+                return True # Should be set to true, currently temporarily disabled
         return False
     except FileNotFoundError:
         return False
