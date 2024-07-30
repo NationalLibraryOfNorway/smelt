@@ -413,7 +413,6 @@ class Smelt(QWidget):
             self.ffmpeg_encoder = [
                 '-c:v', 'hevc_nvenc',
                 '-pix_fmt', 'yuv422p10le',
-                '-profile:v main422-10',
             ]
         else:
             self.ffmpeg_hardware_accel = [

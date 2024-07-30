@@ -115,7 +115,6 @@ def construct_dpx_commands(self):
 
     self.ffmpeg_prores_cmd = self.ffmpeg_base + self.ffmpeg_hardware_accel + [
         '-i', self.lossless_mov,
-
         '-vf', 'scale=-2:1080,format=yuv422p10le',
         '-c:v', 'prores',
         '-profile:v', '3',
