@@ -64,6 +64,7 @@ def construct_dpx_commands(self):
         self.ffmpeg_path, '-v',
         'info', '-stats',
         '-progress', '-',
+        '-report'
     ]
 
     ffmpeg_dpx = [
@@ -85,7 +86,7 @@ def construct_dpx_commands(self):
                                     '-preset', 'slow',
                                     '-qp', '0',
                                     self.lossless_mov,
-                                    self.proceed_lossless
+                                    self.proceed_lossless,
                                 ])
 
     if self.inkluderLydCheckBox.isChecked():
@@ -196,7 +197,7 @@ def construct_mxf_mov_commands(self):
     - self.ffmpeg_dcp_h264_cmd
     - self.ffmpeg_h264_from_prores_cmd
     """
-    ffmpeg_base = [self.ffmpeg_path, ]
+    ffmpeg_base = [self.ffmpeg_path, '-report', ]
 
     if self.inkluderLydCheckBox.isChecked and self.audio_file:
         ffmpeg_video_audio = ['-i', self.video, '-i', self.audio_file, ]
@@ -213,7 +214,7 @@ def construct_mxf_mov_commands(self):
         '-c:a', 'copy',
         '-v', 'info',
         self.lossless_mov,
-        self.proceed_lossless
+        self.proceed_lossless,
     ]
     self.ffmpeg_dcp_prores = ffmpeg_base + self.ffmpeg_hardware_accel + ffmpeg_video_audio + [
         '-c:v', 'prores',
@@ -270,6 +271,7 @@ def construct_audio_commands(self):
     """
     self.ffmpeg_audio_cmd = [
         self.ffmpeg_path,
+        '-report',
         '-i', self.audio_file,
         '-c:a', 'aac',
         '-b:a', '192k',
@@ -280,6 +282,7 @@ def construct_audio_commands(self):
     ]
     self.ffmpeg_lossless_audio_cmd = [
         self.ffmpeg_path,
+        '-report',
         '-i', self.audio_file,
         '-c:a', 'pcm_s16le',
         '-vn',

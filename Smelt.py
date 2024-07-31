@@ -33,6 +33,9 @@ class Smelt(QWidget):
         """
         Initialize paths and filenames
         """
+        self.output_folder_name = None
+        self.output_folder = None
+        self.log_file_name = None
         self.temp_mov = None
         self.process = None
         self.process_terminated = None
@@ -346,7 +349,25 @@ class Smelt(QWidget):
 
     def run_smelt(self):
         """
-        Main method to run the Smelt process.
+        Execute the Smelt process for converting video and audio files.
+
+        This method orchestrates the entire Smelt process, including initial setup,
+        video and audio processing, and error handling. The method updates the GUI
+        elements to reflect the current status and locks down the interface to
+        prevent user interaction during processing.
+
+        Steps involved:
+        1. Check the validity of input paths.
+        2. Lock down the GUI and show initial setup status.
+        3. Perform initial setup for the conversion process.
+        4. Based on user selection, handle either video or audio operations.
+        5. Display success or termination messages upon completion.
+        6. Handle and display errors if any subprocess or general exceptions occur.
+        7. Unlock the GUI and reset the status label to 'Idle' after processing.
+
+        Raises:
+            subprocess.CalledProcessError: If an error occurs during the subprocess execution.
+            Exception: For any other exceptions that may occur during the process.
         """
         self.check_path_validity()
         GUI.lock_down(self, True)
@@ -442,6 +463,9 @@ class Smelt(QWidget):
 
         os.makedirs(os.path.join(output_folder, 'lossless'), exist_ok=True)
         os.makedirs(os.path.join(output_folder, 'logs'), exist_ok=True)
+
+        self.output_folder_name = output_folder_name
+        self.output_folder = output_folder
 
         self.proceed_h264 = self.exist_check(self.h264_mp4)
         self.proceed_lossless = self.exist_check(self.lossless_mov) if self.mezzaninfilCheckBox.isChecked() else '-n'
@@ -556,6 +580,7 @@ class Smelt(QWidget):
             commands (list): A list of command attribute names to execute.
         """
         for i, cmd in enumerate(commands):
+            os.environ['FFREPORT'] = f'file={os.path.join(self.output_folder, 'logs', '{}_{}_log.txt'.format(self.output_folder_name, commands[i]))}:level=32'
             step_text = "Step {}/{}: Running {}".format(i + 1, len(commands), cmd.replace('_', ' ').title())
             self.step_label.setText(step_text)
             if hasattr(self, cmd):
@@ -594,13 +619,31 @@ class Smelt(QWidget):
 
     def run_ffmpeg_command(self, command):
         """
-        Run an FFmpeg command and update the progress bar.
+        Execute an FFmpeg command and update the GUI progress bar accordingly.
+
+        This method runs the given FFmpeg command as a subprocess, captures its output,
+        and updates the progress bar based on the command's progress. It also handles
+        platform-specific settings to run FFmpeg in a non-interactive mode on Windows.
 
         Args:
-            command (list): The FFmpeg command to run.
+            command (list): The FFmpeg command to run, provided as a list of strings.
 
         Returns:
-            bool: True if the command was successful, False otherwise.
+            bool: True if the command executes successfully, False otherwise.
+
+        Steps:
+        1. Set up platform-specific startup information for the subprocess.
+        2. Start the FFmpeg subprocess and capture its stdout and stderr outputs.
+        3. Use separate threads to enqueue stdout and stderr outputs.
+        4. Parse the stderr output to determine the total duration of the video.
+        5. Update the progress bar based on the current processing time.
+        6. Display estimated remaining time for the process to complete.
+        7. Wait for the process and threads to finish.
+        8. Check the return code to determine if the process was successful.
+
+        Raises:
+            subprocess.CalledProcessError: If the FFmpeg command returns a non-zero exit code.
+            Exception: For any other exceptions that may occur during the process.
         """
         if platform.system() == 'Windows':
             startupinfo = subprocess.STARTUPINFO()
