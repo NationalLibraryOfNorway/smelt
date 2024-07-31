@@ -82,6 +82,7 @@ def construct_dpx_commands(self):
 
     self.ffmpeg_lossless_cmd = (self.ffmpeg_base + self.ffmpeg_hardware_accel + ffmpeg_dpx +
                                 self.ffmpeg_encoder + audio_cmd + [
+                                    '-preset', 'slow',
                                     '-qp', '0',
                                     self.lossless_mov,
                                     self.proceed_lossless

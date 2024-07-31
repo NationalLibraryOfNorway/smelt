@@ -61,7 +61,13 @@ def get_ffmpeg_path(include_packaged_version=False):
             tuple: A tuple containing the version numbers, or None if the version couldn't be determined.
         """
         try:
-            result = subprocess.run([ffmpeg_path, '-version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            if platform.system() == 'Windows':
+                startupinfo = subprocess.STARTUPINFO()
+                startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+                result = subprocess.run([ffmpeg_path, '-version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, startupinfo=startupinfo)
+            else:
+                result = subprocess.run([ffmpeg_path, '-version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+
             version_line = result.stdout.split('\n')[0]
             version = version_line.split()[2]
             version_parts = version.split('-')[0].split('.')
