@@ -416,6 +416,7 @@ class Smelt(QWidget):
         """
         filetype = self.determine_file_type()
         folder_path = self.folder_path
+        self.get_version()
 
         if not self.kunLydCheckBox.isChecked():
             if not folder_path:
@@ -472,6 +473,36 @@ class Smelt(QWidget):
         self.proceed_prores = self.exist_check(self.prores_mov) if self.inkluderProresCheckBox.isChecked() else '-n'
 
         return True
+
+    def get_version(self):
+        """
+        Get the version of the ffmpeg executable.
+
+        Args:
+            ffmpeg_path (str): The path to the ffmpeg executable.
+
+        Returns:
+            tuple: A tuple containing the version numbers, or None if the version couldn't be determined.
+        """
+        try:
+            if platform.system() == 'Windows':
+                startupinfo = subprocess.STARTUPINFO()
+                startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+                result = subprocess.run([self.ffmpeg_path, '-version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, startupinfo=startupinfo)
+            else:
+                result = subprocess.run([self.ffmpeg_path, '-version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+
+            version_line = result.stdout.split('\n')[0]
+            version = version_line.split()[2]
+            version_parts = version.split('-')[0].split('.')
+            version_numbers = tuple(int(part) for part in version_parts if part.isdigit())
+
+            return version_numbers
+        except FileNotFoundError:
+            return None
+        except Exception as e:
+            self.output_text.append(e)
+            return None
 
     def check_dpx_files(self, folder_path):
         """
