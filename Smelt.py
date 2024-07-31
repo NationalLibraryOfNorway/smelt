@@ -492,13 +492,16 @@ class Smelt(QWidget):
             else:
                 result = subprocess.run(['ffmpeg', '-version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
 
-            version_line = result.stdout.split('\n')[0]
-            version = version_line.split()[2]
-            version_parts = version.split('-')[0].split('.')
-            version_numbers = tuple(int(part) for part in version_parts if part.isdigit())
+            if result.stdout:
+                version_line = result.stdout.split('\n')[0]
+                version_parts = version_line.split()
 
-            self.output_text.append('Ver: ' + str(version_numbers))
-            return version_numbers
+                if len(version_parts) >= 3:
+                    version = version_parts[2]
+                    version_numbers = tuple(int(part) for part in version.split('-')[0].split('.') if part.isdigit())
+                    self.output_text.append(str(version_numbers))
+                    return version_numbers
+            return None
         except FileNotFoundError as e:
             self.output_text.append('Error:' + str(e))
             return None
