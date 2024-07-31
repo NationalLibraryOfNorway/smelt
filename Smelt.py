@@ -488,20 +488,22 @@ class Smelt(QWidget):
             if platform.system() == 'Windows':
                 startupinfo = subprocess.STARTUPINFO()
                 startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-                result = subprocess.run([self.ffmpeg_path, '-version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, startupinfo=startupinfo)
+                result = subprocess.run(['ffmpeg', '-version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, startupinfo=startupinfo)
             else:
-                result = subprocess.run([self.ffmpeg_path, '-version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+                result = subprocess.run(['ffmpeg', '-version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
 
             version_line = result.stdout.split('\n')[0]
             version = version_line.split()[2]
             version_parts = version.split('-')[0].split('.')
             version_numbers = tuple(int(part) for part in version_parts if part.isdigit())
 
+            self.output_text.append('Ver: ' + str(version_numbers))
             return version_numbers
-        except FileNotFoundError:
+        except FileNotFoundError as e:
+            self.output_text.append('Error:' + str(e))
             return None
         except Exception as e:
-            self.output_text.append(e)
+            self.output_text.append('Error:' + str(e))
             return None
 
     def check_dpx_files(self, folder_path):
