@@ -75,10 +75,11 @@ def get_ffmpeg_path(include_packaged_version=False):
 
             return version_numbers
         except FileNotFoundError:
-            print(f"FFmpeg executable not found at path: {ffmpeg_path}")
+            return None
+            # print(f"FFmpeg executable not found at path: {ffmpeg_path}")
         except Exception as e:
-            print(e)
-        return None
+            return None
+            # print(e)
 
     installed_ffmpeg_path = 'ffmpeg'
 
@@ -191,16 +192,18 @@ def cuda_available():
         - Catches and prints any other exceptions that occur during the checks.
     """
     try:
-        result = subprocess.run(['ffmpeg', '-hwaccels'], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                                universal_newlines=True)
+        result = subprocess.run(['ffmpeg', '-hwaccels'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+
         if 'cuda' in result.stdout:
-            result = subprocess.run(['nvidia-smi'], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                                    universal_newlines=True)
+            # Check for NVIDIA GPU using nvidia-smi
+            result = subprocess.run(['nvidia-smi'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+
             if result.returncode == 0:
-                return True # Should be set to true, currently temporarily disabled
+                return False
+
         return False
     except FileNotFoundError:
         return False
     except Exception as e:
-        print("CUDA availability check failed: {}".format(e))
+        # print(f"CUDA availability check failed: {e}")
         return False

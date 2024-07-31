@@ -428,12 +428,20 @@ class Smelt(QWidget):
         self.folder_name = os.path.basename(folder_path)
         self.audio_file = self.audio_file_path or ''
 
-        self.lossless_mov = os.path.join(folder_path, 'lossless', '{}.mov'.format(self.folder_name))
-        self.prores_mov = os.path.join(folder_path, 'lossless', '{}_prores.mov'.format(self.folder_name))
-        self.h264_mp4 = os.path.join(folder_path, 'lossless', 'nb-no_{}.mp4'.format(self.folder_name))
-        self.temp_mov = os.path.join(folder_path, 'lossless', 'temp_{}.mov'.format(self.folder_name))
+        if self.folder_name == "images" or self.folder_name == "audio":
+            output_folder = os.path.dirname(folder_path)
+            output_folder_name = os.path.basename(output_folder)
+        else:
+            output_folder = folder_path
+            output_folder_name = os.path.basename(output_folder)
 
-        os.makedirs(os.path.join(folder_path, 'lossless'), exist_ok=True)
+        self.lossless_mov = os.path.join(output_folder, 'lossless', '{}.mov'.format(output_folder_name))
+        self.prores_mov = os.path.join(output_folder, 'lossless', '{}_prores.mov'.format(output_folder_name))
+        self.h264_mp4 = os.path.join(output_folder, 'lossless', 'nb-no_{}.mp4'.format(output_folder_name))
+        self.temp_mov = os.path.join(output_folder, 'lossless', 'temp_{}.mov'.format(output_folder_name))
+
+        os.makedirs(os.path.join(output_folder, 'lossless'), exist_ok=True)
+        os.makedirs(os.path.join(output_folder, 'logs'), exist_ok=True)
 
         self.proceed_h264 = self.exist_check(self.h264_mp4)
         self.proceed_lossless = self.exist_check(self.lossless_mov) if self.mezzaninfilCheckBox.isChecked() else '-n'

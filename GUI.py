@@ -78,43 +78,43 @@ def create_cuda_indicator(self):
     """
     self.cuda_indicator = QLabel(self)
     self.cuda_indicator.setFixedSize(22, 22)  # Increase size to include space for border and padding
-
-    if getattr(sys, 'frozen', False):
-        icon_path = ":/cuda.png"
-    else:
-        icon_path = "resources/cuda.png"
-    pixmap = QPixmap(icon_path).scaled(20, 20, Qt.KeepAspectRatio, Qt.SmoothTransformation)
-
-    if Utils.cuda_available():
-        self.cuda_indicator.setStyleSheet("""
-                QLabel { 
-                    background-color: green; 
-                    border: 4px solid green; 
-                    padding: 18px; 
-                    border-radius: 6px; 
-                    font-size: 12px;  /* Adjust the font size to make the tooltip smaller */
-                }
-                QLabel[toolTip] { 
-                    font-size: 12px;  /* Adjust the font size to make the tooltip smaller */
-                }
-            """)
-        self.cuda_indicator.setToolTip("CUDA Hardware Akselerasjon Tilgjengelig.")
-    else:
-        self.cuda_indicator.setStyleSheet("""
-                QLabel { 
-                    background-color: red; 
-                    border: 4px solid red; 
-                    padding: 18px; 
-                    border-radius: 6px; 
-                    font-size: 12px;  /* Adjust the font size to make the tooltip smaller */
-                }
-                QLabel[toolTip] { 
-                    font-size: 12px;  /* Adjust the font size to make the tooltip smaller */
-                }
-            """)
-        self.cuda_indicator.setToolTip("CUDA Hardware Akselerasjon IKKE Tilgjengelig.")
-
-    self.cuda_indicator.setPixmap(pixmap)
+    #
+    # if getattr(sys, 'frozen', False):
+    #     icon_path = ":/cuda.png"
+    # else:
+    #     icon_path = "resources/cuda.png"
+    # pixmap = QPixmap(icon_path).scaled(20, 20, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+    #
+    # if Utils.cuda_available():
+    #     self.cuda_indicator.setStyleSheet("""
+    #             QLabel {
+    #                 background-color: green;
+    #                 border: 4px solid green;
+    #                 padding: 18px;
+    #                 border-radius: 6px;
+    #                 font-size: 12px;  /* Adjust the font size to make the tooltip smaller */
+    #             }
+    #             QLabel[toolTip] {
+    #                 font-size: 12px;  /* Adjust the font size to make the tooltip smaller */
+    #             }
+    #         """)
+    #     self.cuda_indicator.setToolTip("CUDA Hardware Akselerasjon Tilgjengelig.")
+    # else:
+    #     self.cuda_indicator.setStyleSheet("""
+    #             QLabel {
+    #                 background-color: red;
+    #                 border: 4px solid red;
+    #                 padding: 18px;
+    #                 border-radius: 6px;
+    #                 font-size: 12px;  /* Adjust the font size to make the tooltip smaller */
+    #             }
+    #             QLabel[toolTip] {
+    #                 font-size: 12px;  /* Adjust the font size to make the tooltip smaller */
+    #             }
+    #         """)
+    #     self.cuda_indicator.setToolTip("CUDA Hardware Akselerasjon IKKE Tilgjengelig.")
+    #
+    # self.cuda_indicator.setPixmap(pixmap)
     self.cuda_indicator.setAlignment(Qt.AlignCenter)
     self.cuda_indicator.setToolTipDuration(0)
 
