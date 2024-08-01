@@ -416,7 +416,6 @@ class Smelt(QWidget):
         """
         filetype = self.determine_file_type()
         folder_path = self.folder_path
-        self.get_version()
 
         if not self.kunLydCheckBox.isChecked():
             if not folder_path:
@@ -473,43 +472,6 @@ class Smelt(QWidget):
         self.proceed_prores = self.exist_check(self.prores_mov) if self.inkluderProresCheckBox.isChecked() else '-n'
 
         return True
-
-    def get_version(self):
-        """
-        Get the version of the ffmpeg executable.
-
-        Args:
-            ffmpeg_path (str): The path to the ffmpeg executable.
-
-        Returns:
-            tuple: A tuple containing the version numbers, or None if the version couldn't be determined.
-        """
-        try:
-            if platform.system() == 'Windows':
-                startupinfo = subprocess.STARTUPINFO()
-                startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-                result = subprocess.run(['ffmpeg', '-version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, startupinfo=startupinfo)
-            else:
-                result = subprocess.run(['ffmpeg', '-version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-
-            self.output_text.append(str(result))
-            if result.stdout:
-                self.output_text.append(str(result.stdout))
-                version_line = result.stdout.split('\n')[0]
-                version_parts = version_line.split()
-
-                if len(version_parts) >= 3:
-                    version = version_parts[2]
-                    version_numbers = tuple(int(part) for part in version.split('-')[0].split('.') if part.isdigit())
-                    self.output_text.append(str(version_numbers))
-                    return version_numbers
-            return None
-        except FileNotFoundError as e:
-            self.output_text.append('Error:' + str(e))
-            return None
-        except Exception as e:
-            self.output_text.append('Error:' + str(e))
-            return None
 
     def check_dpx_files(self, folder_path):
         """
