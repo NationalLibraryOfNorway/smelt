@@ -492,6 +492,7 @@ class Smelt(QWidget):
             else:
                 result = subprocess.run(['ffmpeg', '-version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
 
+            self.output_text.append(str(result))
             if result.stdout:
                 self.output_text.append(str(result.stdout))
                 version_line = result.stdout.split('\n')[0]
