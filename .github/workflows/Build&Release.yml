@@ -59,6 +59,12 @@ jobs:
         sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-10 10
         sudo update-alternatives --set gcc /usr/bin/gcc-10
         sudo update-alternatives --set g++ /usr/bin/g++-10
+
+    - name: Set LD_LIBRARY_PATH
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        export LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH
+        pyinstaller your_spec_file.spec
       
     - name: Extract FFmpeg (Windows)
       if: matrix.os == 'windows-latest'
