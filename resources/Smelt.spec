@@ -17,7 +17,7 @@ if is_windows:
 a = Analysis(
     ['../Smelt.py', '../GUI.py', '../ffmpeg_commands.py', '../Utils.py', '../resources/resources_rc.py'],
     pathex=['..'],
-    binaries=[(binaries, excluded_binaries)],
+    binaries=[(excluded_binaries)],
     datas=datas,
     hiddenimports=[],
     hookspath=[],
