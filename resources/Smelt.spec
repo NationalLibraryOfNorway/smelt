@@ -10,7 +10,7 @@ datas = [
     ('../resources/cuda.png', 'icons'),
     ('../resources/ffmpeg.png', 'icons'),
 ]
-excluded_binaries = ['libstdc++.so.6']
+
 if is_windows:
     datas.append(('../resources/ffmpeg.exe', '.'))
 
@@ -28,10 +28,12 @@ a = Analysis(
     optimize=0,
 )
 
-for b in excluded_binaries:
-    for item in a.binaries:
-        if b in item[1]:
-            a.binaries.remove(item)
+excluded_binaries = ['libstdc++.so.6']
+if is_linux:
+    for b in excluded_binaries:
+        for item in a.binaries:
+            if b in item[1]:
+                a.binaries.remove(item)
 
 pyz = PYZ(a.pure)
 
