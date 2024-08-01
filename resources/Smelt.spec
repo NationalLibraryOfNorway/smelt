@@ -10,6 +10,7 @@ datas = [
     ('../resources/cuda.png', 'icons'),
     ('../resources/ffmpeg.png', 'icons'),
 ]
+binaries = []
 excluded_binaries = ['libstdc++.so.6']
 if is_windows:
     datas.append(('../resources/ffmpeg.exe', '.'))
@@ -17,7 +18,7 @@ if is_windows:
 a = Analysis(
     ['../Smelt.py', '../GUI.py', '../ffmpeg_commands.py', '../Utils.py', '../resources/resources_rc.py'],
     pathex=['..'],
-    binaries=[excluded_binaries],
+    binaries=[(binaries, excluded_binaries)],
     datas=datas,
     hiddenimports=[],
     hookspath=[],
