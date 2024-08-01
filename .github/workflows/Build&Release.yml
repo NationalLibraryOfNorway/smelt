@@ -64,7 +64,6 @@ jobs:
       if: matrix.os == 'ubuntu-latest'
       run: |
         export LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH
-        pyinstaller your_spec_file.spec
       
     - name: Extract FFmpeg (Windows)
       if: matrix.os == 'windows-latest'
