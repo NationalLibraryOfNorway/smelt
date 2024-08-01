@@ -115,37 +115,37 @@ def construct_dpx_commands(self):
             self.proceed_h264
         ]
 
-    if Utils.cuda_available():
-        self.ffmpeg_prores_cmd = self.ffmpeg_base + [
-            '-hwaccel', 'auto',
-            '-i', self.temp_mov,
-            '-vf', 'scale=-2:1080,format=yuv422p10le',
-            '-c:v', 'prores',
-            '-profile:v', '3',
-            '-vf', 'scale=-2:1080',
-            '-c:a', 'pcm_s16le',
-            self.prores_mov,
-            self.proceed_prores
-        ]
-        self.ffmpeg_convert = self.ffmpeg_base + [
-            '-i', self.lossless_mov,
-            '-pix_fmt', 'yuv422p10le',
-            '-vf', 'scale=in_color_matrix=bt709:out_color_matrix=bt709',
-            self.temp_mov,
-            self.proceed_prores
-        ]
-    else:
-        self.ffmpeg_prores_cmd = self.ffmpeg_base + [
-            '-hwaccel', 'auto',
-            '-i', self.lossless_mov,
-            '-vf', 'scale=-2:1080,format=yuv422p10le',
-            '-c:v', 'prores',
-            '-profile:v', '3',
-            '-vf', 'scale=-2:1080',
-            '-c:a', 'pcm_s16le',
-            self.prores_mov,
-            self.proceed_prores
-        ]
+    # if Utils.cuda_available():
+    #     self.ffmpeg_prores_cmd = self.ffmpeg_base + [
+    #         '-hwaccel', 'auto',
+    #         '-i', self.temp_mov,
+    #         '-vf', 'scale=-2:1080,format=yuv422p10le',
+    #         '-c:v', 'prores',
+    #         '-profile:v', '3',
+    #         '-vf', 'scale=-2:1080',
+    #         '-c:a', 'pcm_s16le',
+    #         self.prores_mov,
+    #         self.proceed_prores
+    #     ]
+    #     self.ffmpeg_convert = self.ffmpeg_base + [
+    #         '-i', self.lossless_mov,
+    #         '-pix_fmt', 'yuv422p10le',
+    #         '-vf', 'scale=in_color_matrix=bt709:out_color_matrix=bt709',
+    #         self.temp_mov,
+    #         self.proceed_prores
+    #     ]
+    # else:
+    self.ffmpeg_prores_cmd = self.ffmpeg_base + [
+        '-hwaccel', 'auto',
+        '-i', self.lossless_mov,
+        '-vf', 'scale=-2:1080,format=yuv422p10le',
+        '-c:v', 'prores',
+        '-profile:v', '3',
+        '-vf', 'scale=-2:1080',
+        '-c:a', 'pcm_s16le',
+        self.prores_mov,
+        self.proceed_prores
+    ]
 
     self.ffmpeg_h264_cmd = self.ffmpeg_base + self.ffmpeg_hardware_accel + [
         '-i', self.lossless_mov,

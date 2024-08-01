@@ -428,22 +428,23 @@ class Smelt(QWidget):
             else:
                 self.video = self.mappe_input_field.text()
 
-        if Utils.cuda_available():
-            self.ffmpeg_hardware_accel = [
-                '-hwaccel', 'cuda',
-            ]
-            self.ffmpeg_encoder = [
-                '-c:v', 'hevc_nvenc',
-                '-pix_fmt', 'yuv422p10le',
-            ]
-        else:
-            self.ffmpeg_hardware_accel = [
-                '-hwaccel', 'auto',
-            ]
-            self.ffmpeg_encoder = [
-                '-c:v', 'libx264',
-                '-pix_fmt', 'yuv422p10le',
-            ]
+        # if Utils.cuda_available():
+        #     self.ffmpeg_hardware_accel = [
+        #         '-hwaccel', 'cuda',
+        #     ]
+        #     self.ffmpeg_encoder = [
+        #         '-c:v', 'hevc_nvenc',
+        #         '-pix_fmt', 'yuv422p10le',
+        #     ]
+        # else:
+
+        self.ffmpeg_hardware_accel = [
+            '-hwaccel', 'auto',
+        ]
+        self.ffmpeg_encoder = [
+            '-c:v', 'libx264',
+            '-pix_fmt', 'yuv422p10le',
+        ]
 
         self.fps = self.fpsCounter.currentText()
         self.folder_name = os.path.basename(folder_path)
@@ -556,11 +557,11 @@ class Smelt(QWidget):
         elif not self.mezzaninfilCheckBox.isChecked():
             self.execute_ffmpeg_commands(['ffmpeg_h264_cmd_direct'])
         else:
-            if Utils.cuda_available():
-                self.execute_ffmpeg_commands(['ffmpeg_lossless_cmd', 'ffmpeg_convert',
-                                              'ffmpeg_prores_cmd', 'ffmpeg_h264_cmd'])
-            else:
-                self.execute_ffmpeg_commands(['ffmpeg_lossless_cmd', 'ffmpeg_prores_cmd', 'ffmpeg_h264_cmd'])
+            # if Utils.cuda_available():
+            #     self.execute_ffmpeg_commands(['ffmpeg_lossless_cmd', 'ffmpeg_convert',
+            #                                   'ffmpeg_prores_cmd', 'ffmpeg_h264_cmd'])
+            # else:
+            self.execute_ffmpeg_commands(['ffmpeg_lossless_cmd', 'ffmpeg_prores_cmd', 'ffmpeg_h264_cmd'])
 
     def handle_audio_operations(self):
         """
