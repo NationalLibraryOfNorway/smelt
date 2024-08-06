@@ -571,8 +571,7 @@ class Smelt(QWidget):
             commands (list): A list of command attribute names to execute.
         """
         for i, cmd in enumerate(commands):
-            self.output_text.append(str(f'file={os.path.join(self.output_folder, 'logs', '{}_{}_log.txt'.format(self.output_folder_name, commands[i]))}:level=32'))
-            os.environ['FFREPORT'] = f'file={os.path.join(self.output_folder, 'logs', '{}_{}_log.txt'.format(self.output_folder_name, commands[i]))}:level=32'
+            os.environ['FFREPORT'] = f"file={os.path.join(self.output_folder, 'logs', '{}_{}_log.txt'.format(self.output_folder_name, commands[i]))}:level=32".replace("\\", "/")
             step_text = "Step {}/{}: Running {}".format(i + 1, len(commands), cmd.replace('_', ' ').title())
             self.step_label.setText(step_text)
             if hasattr(self, cmd):
