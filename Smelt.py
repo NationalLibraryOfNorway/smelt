@@ -554,13 +554,13 @@ class Smelt(QWidget):
             self.execute_ffmpeg_commands(['ffmpeg_dcp_cmd', 'ffmpeg_dcp_prores', 'ffmpeg_dcp_h264_cmd'])
         elif filetype == 'mov':
             self.execute_ffmpeg_commands(['ffmpeg_h264_from_prores_cmd'])
-        elif not self.mezzaninfilCheckBox.isChecked():
+        elif not self.mezzaninfilCheckBox.isChecked() and not self.inkluderProresCheckBox.isChecked():
             self.execute_ffmpeg_commands(['ffmpeg_h264_cmd_direct'])
+        elif not self.inkluderProresCheckBox.isChecked():
+            self.execute_ffmpeg_commands(['ffmpeg_lossless_cmd', 'ffmpeg_h264_cmd'])
+        elif self.inkluderProresCheckBox.isChecked() and not self.mezzaninfilCheckBox.isChecked():
+            self.execute_ffmpeg_commands(['ffmpeg_prores_cmd', 'ffmpeg_h264_cmd_direct'])
         else:
-            # if Utils.cuda_available():
-            #     self.execute_ffmpeg_commands(['ffmpeg_lossless_cmd', 'ffmpeg_convert',
-            #                                   'ffmpeg_prores_cmd', 'ffmpeg_h264_cmd'])
-            # else:
             self.execute_ffmpeg_commands(['ffmpeg_lossless_cmd', 'ffmpeg_prores_cmd', 'ffmpeg_h264_cmd'])
 
     def handle_audio_operations(self):
