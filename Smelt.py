@@ -571,7 +571,49 @@ class Smelt(QWidget):
 
     def execute_ffmpeg_commands(self, commands):
         """
-        Execute a list of FFmpeg commands.
+        Execute a sequence of FFmpeg commands and log their output.
+
+        This method iterates over a list of command attribute names, constructs the
+        appropriate log file path for each command, sets up the FFREPORT environment
+        variable to log FFmpeg output, updates the GUI with the current step, and
+        executes each FFmpeg command.
+
+        Args:
+            commands (list of str): A list of attribute names corresponding to FFmpeg
+                                    commands to be executed. Each attribute should
+                                    be a list representing the FFmpeg command and its
+                                    arguments.
+
+        Behavior:
+            - For each command in the list, the method constructs a log file path
+              where the FFmpeg output will be recorded.
+            - On Windows, the log file path is normalized and adapted to ensure compatibility
+              with FFmpeg's logging mechanism.
+            - The FFREPORT environment variable is set to point to the log file with a
+              logging level of 32.
+            - The GUI is updated to display the current step and the command being run.
+            - Each command attribute is retrieved using `getattr` and passed to the
+              `run_ffmpeg_command` method, which handles the actual execution of the FFmpeg command.
+            - If the execution of any command fails, the process is halted.
+
+        Example Usage:
+            If the class has attributes like `cmd1`, `cmd2`, etc., representing FFmpeg commands,
+            you can execute them by calling:
+                self.execute_ffmpeg_commands(['cmd1', 'cmd2'])
+
+        Logging:
+            - Logs for each command are saved in the 'logs' subdirectory of the output folder,
+              with filenames in the format '<command_name>_log.log'.
+            - The log files contain detailed information about the FFmpeg command's execution,
+              useful for debugging and auditing.
+
+        Note:
+            - Ensure that the attributes specified in the `commands` list exist and are valid
+              FFmpeg command lists.
+            - The method assumes the presence of an `output_folder` attribute, a `step_label`
+              for updating the GUI, and an `output_text` list for collecting log messages.
+            - The `run_ffmpeg_command` method should be defined to handle the actual execution
+              of the FFmpeg command.
 
         Args:
             commands (list): A list of command attribute names to execute.
@@ -579,16 +621,12 @@ class Smelt(QWidget):
         for i, cmd in enumerate(commands):
             log_path = os.path.join(self.output_folder, 'logs', '{}_log.log'.format(commands[i]))
 
-            # Normalize path for Windows
             if platform.system() == 'Windows':
                 log_path = os.path.normpath(log_path)
-                # Convert backslashes to forward slashes for the path
                 log_path = log_path.replace('\\', '/')
-                # Ensure the drive letter has the correct format
                 if log_path[1] == ':':
                     log_path = log_path[0] + r'\:' + log_path[2:]
 
-            # Wrap the path in quotes
             ffreport_value = f'file={log_path}:level=32'
             os.environ['FFREPORT'] = ffreport_value
             self.output_text.append(ffreport_value)
