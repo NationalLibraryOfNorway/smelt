@@ -581,13 +581,15 @@ class Smelt(QWidget):
 
             # Normalize path for Windows
             if platform.system() == 'Windows':
-                # log_path = os.path.normpath(log_path)
-                # # Escape colon by adding a backslash before it
-                # log_path = log_path.replace(':', '\\:')
-                log_path = "D\:\RichardStorken_tlr_mst_1998x1080_12bit-rgb_dpx/logs/Ffmpeg_lossless.log:level=32"
+                log_path = os.path.normpath(log_path)
+                # Convert backslashes to forward slashes for the path
+                log_path = log_path.replace('\\', '/')
+                # Ensure the drive letter has the correct format
+                if log_path[1] == ':':
+                    log_path = log_path[0] + r'\:' + log_path[2:]
 
-            # Construct FFREPORT value
-            ffreport_value = "file=" + log_path + ":level=32"
+            # Wrap the path in quotes
+            ffreport_value = f'file="{log_path}":level=32'
             os.environ['FFREPORT'] = ffreport_value
             self.output_text.append(ffreport_value)
             step_text = "Step {}/{}: Running {}".format(i + 1, len(commands), cmd.replace('_', ' ').title())
