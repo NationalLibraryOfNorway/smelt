@@ -584,7 +584,7 @@ class Smelt(QWidget):
                 # log_path = os.path.normpath(log_path)
                 # # Escape colon by adding a backslash before it
                 # log_path = log_path.replace(':', '\\:')
-                log_path = "D\:\RichardStorken_tlr_mst_1998x1080_12bit-rgb_dpx\\logs\\Ffmpeg_lossless.log:level=32"
+                log_path = "D\:\RichardStorken_tlr_mst_1998x1080_12bit-rgb_dpx/logs/Ffmpeg_lossless.log:level=32"
 
             # Construct FFREPORT value
             ffreport_value = "file=" + log_path + ":level=32"
