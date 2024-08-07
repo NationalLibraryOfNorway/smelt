@@ -589,7 +589,7 @@ class Smelt(QWidget):
                     log_path = log_path[0] + r'\:' + log_path[2:]
 
             # Wrap the path in quotes
-            ffreport_value = f'file="{log_path}":level=32'
+            ffreport_value = f'file={log_path}:level=32'
             os.environ['FFREPORT'] = ffreport_value
             self.output_text.append(ffreport_value)
             step_text = "Step {}/{}: Running {}".format(i + 1, len(commands), cmd.replace('_', ' ').title())
