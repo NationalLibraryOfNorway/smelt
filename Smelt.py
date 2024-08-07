@@ -581,10 +581,10 @@ class Smelt(QWidget):
 
             # Normalize path for Windows
             if platform.system() == 'Windows':
-                log_path = os.path.normpath(log_path)
-                # Escape colon after the drive letter
-                if log_path[1] == ':':
-                    log_path = log_path[:2] + '\\' + log_path[2:]
+                # log_path = os.path.normpath(log_path)
+                # # Escape colon by adding a backslash before it
+                # log_path = log_path.replace(':', '\\:')
+                log_path = "D\:\RichardStorken_tlr_mst_1998x1080_12bit-rgb_dpx\\logs\\Ffmpeg_lossless.log:level=32"
 
             # Construct FFREPORT value
             ffreport_value = "file=" + log_path + ":level=32"
