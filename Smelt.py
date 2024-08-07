@@ -578,7 +578,10 @@ class Smelt(QWidget):
         """
         for i, cmd in enumerate(commands):
             log_path = os.path.join(self.output_folder, 'logs', '{}_{}_log.txt'.format(self.output_folder_name, commands[i]))
+            if platform.system() == 'Windows':
+                log_path = log_path.replace('\\', '/')
             os.environ['FFREPORT'] = fr"file={log_path}:level=32"
+            self.output_text.append(log_path)
             step_text = "Step {}/{}: Running {}".format(i + 1, len(commands), cmd.replace('_', ' ').title())
             self.step_label.setText(step_text)
             if hasattr(self, cmd):
