@@ -541,7 +541,13 @@ class Smelt(QWidget):
             ffmpeg_commands.construct_mxf_mov_commands(self)
 
         if filetype == 'mxf':
-            self.execute_ffmpeg_commands(['ffmpeg_dcp_cmd', 'ffmpeg_dcp_prores', 'ffmpeg_dcp_h264_cmd'])
+            commands = []
+            if self.mezzaninfilCheckBox.isChecked():
+                commands.append('ffmpeg_dcp_cmd')
+            if self.inkluderProresCheckBox.isChecked():
+                commands.append('ffmpeg_dcp_prores')
+            commands.append('ffmpeg_dcp_h264_cmd')
+            self.execute_ffmpeg_commands(commands)
         elif filetype == 'mov':
             self.execute_ffmpeg_commands(['ffmpeg_h264_from_prores_cmd'])
         elif not self.mezzaninfilCheckBox.isChecked() and not self.inkluderProresCheckBox.isChecked():
@@ -571,7 +577,8 @@ class Smelt(QWidget):
             commands (list): A list of command attribute names to execute.
         """
         for i, cmd in enumerate(commands):
-            os.environ['FFREPORT'] = f"file={os.path.join(self.output_folder, 'logs', '{}_{}_log.txt'.format(self.output_folder_name, commands[i]))}:level=32".replace("\\", "/")
+            log_path = os.path.join(self.output_folder, 'logs', '{}_{}_log.txt'.format(self.output_folder_name, commands[i]))
+            os.environ['FFREPORT'] = fr"file={log_path}:level=32"
             step_text = "Step {}/{}: Running {}".format(i + 1, len(commands), cmd.replace('_', ' ').title())
             self.step_label.setText(step_text)
             if hasattr(self, cmd):

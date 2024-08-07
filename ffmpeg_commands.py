@@ -198,6 +198,7 @@ def construct_mxf_mov_commands(self):
     else:
         ffmpeg_video_audio = ['-i', self.video, ]
         ffmpeg_audio_param = []
+
     self.ffmpeg_dcp_cmd = ffmpeg_base + self.ffmpeg_hardware_accel + ffmpeg_video_audio + self.ffmpeg_encoder + [
         '-preset', 'slow',
         '-qp', '0',
