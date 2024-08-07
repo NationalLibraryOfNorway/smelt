@@ -33,6 +33,7 @@ class Smelt(QWidget):
         """
         Initialize paths and filenames
         """
+        self.ffreport_value = ''
         self.output_folder_name = None
         self.output_folder = None
         self.log_file_name = None
@@ -577,12 +578,15 @@ class Smelt(QWidget):
             commands (list): A list of command attribute names to execute.
         """
         for i, cmd in enumerate(commands):
-            log_path = os.path.join(self.output_folder, 'logs', '{}_log.log'.format(commands[i]))
+            base_dir = os.path.abspath(self.output_folder)  # Convert to absolute path
+            log_path = os.path.join(base_dir, 'logs', '{}_log.log'.format(commands[i]))
+
             if platform.system() == 'Windows':
                 log_path = os.path.normpath(log_path)
-            ffreport_value = "file=" + log_path
-            os.environ['FFREPORT'] = ffreport_value
-            self.output_text.append(ffreport_value)
+
+            env = os.environ.copy()
+            ffreport_value = f"file={log_path}:level=32"
+            env['FFREPORT'] = ffreport_value
             step_text = "Step {}/{}: Running {}".format(i + 1, len(commands), cmd.replace('_', ' ').title())
             self.step_label.setText(step_text)
             if hasattr(self, cmd):
