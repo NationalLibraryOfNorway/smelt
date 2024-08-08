@@ -139,7 +139,7 @@ class Smelt(QWidget):
                 self.film_file_path = file_path
                 file_name = os.path.basename(file_path)
                 self.folder_path = os.path.dirname(file_path)
-                self.mappe_input_field.setText(file_name)
+                self.mappe_input_field.setText(file_path)
 
         def select_audio():
             self.inkluderLydCheckBox.setChecked(True)
@@ -327,7 +327,7 @@ class Smelt(QWidget):
         """
         Check the validity of the paths in the input fields and update attributes accordingly.
         """
-        mappe_input_text = self.mappe_input_field.text().strip()
+        mappe_input_text = os.path.abspath(self.mappe_input_field.text())
         fil_input_text = self.fil_input_field.text().strip()
 
         if os.path.isdir(mappe_input_text):
@@ -343,6 +343,7 @@ class Smelt(QWidget):
             self.inkluderLydCheckBox.setChecked(False)
 
         if self.audio_file_path != '' and not (os.path.isdir(mappe_input_text) | os.path.isfile(mappe_input_text)):
+
             if not self.kunLydCheckBox.isChecked():
                 self.kunLydCheckBox.setChecked(True)
                 self.inkluderProresCheckBox.setChecked(False)
