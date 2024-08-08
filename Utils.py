@@ -7,7 +7,7 @@ import os
 import tempfile
 import zipfile
 
-from PyQt5.QtGui import QIcon, QPixmap, QPalette, QFont, QColor
+from PyQt5.QtGui import QPalette, QFont, QColor
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import Qt
 

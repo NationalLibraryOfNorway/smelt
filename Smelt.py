@@ -351,23 +351,47 @@ class Smelt(QWidget):
         """
         Execute the Smelt process for converting video and audio files.
 
-        This method orchestrates the entire Smelt process, including initial setup,
-        video and audio processing, and error handling. The method updates the GUI
-        elements to reflect the current status and locks down the interface to
-        prevent user interaction during processing.
+        This method orchestrates the entire Smelt process, managing initial setup,
+        video and audio processing, and error handling. It ensures the GUI reflects
+        the current status and locks down the interface to prevent user interaction
+        during processing.
 
         Steps involved:
-        1. Check the validity of input paths.
-        2. Lock down the GUI and show initial setup status.
-        3. Perform initial setup for the conversion process.
-        4. Based on user selection, handle either video or audio operations.
-        5. Display success or termination messages upon completion.
-        6. Handle and display errors if any subprocess or general exceptions occur.
-        7. Unlock the GUI and reset the status label to 'Idle' after processing.
+            1. Check the validity of input paths using `check_path_validity`.
+            2. Lock down the GUI to prevent user interaction and show initial setup status.
+            3. Perform initial setup for the conversion process using `initial_setup`.
+            4. Based on user selection, handle either video operations (`handle_video_operations`)
+               or audio operations (`handle_audio_operations`).
+            5. Display a success message if the conversion completes without termination.
+            6. Display a termination message if the process is manually terminated.
+            7. Handle and display errors if any subprocess or general exceptions occur.
+            8. Unlock the GUI and reset the status label to 'Idle' after processing.
 
         Raises:
             subprocess.CalledProcessError: If an error occurs during the subprocess execution.
             Exception: For any other exceptions that may occur during the process.
+
+        Behavior:
+            - Validates input paths to ensure they are correct and accessible.
+            - Locks down the GUI to prevent any user interaction during the process.
+            - Updates the GUI to show the current step being executed.
+            - Performs initial setup, including configuration and validation.
+            - Depending on user input (video or audio), executes the respective processing operations.
+            - Updates the progress bar and displays appropriate messages upon completion or termination.
+            - Handles any errors that occur during the process, displaying error messages and appending
+              error details to the output text.
+            - Unlocks the GUI and resets the status label to 'Idle' once the process is complete.
+
+        Example Usage:
+            To run the Smelt process for converting files, call:
+                self.run_smelt()
+
+        Attributes Used:
+            - self.kunLydCheckBox: Checkbox to determine if only audio processing is needed.
+            - self.output_text: GUI element to display output text and logs.
+            - self.step_label: GUI element to display the current processing step.
+            - self.process_terminated: Flag to check if the process was manually terminated.
+            - self.progress_bar: GUI element to display the progress of the conversion process.
         """
         self.check_path_validity()
         GUI.lock_down(self, True)
@@ -411,8 +435,62 @@ class Smelt(QWidget):
         """
         Perform initial setup and validation before running the main process.
 
+        This method handles the preliminary setup required for video processing,
+        including file type determination, directory checks, FFmpeg configuration,
+        and output path setup. It ensures that all necessary conditions and configurations
+        are met before proceeding with the main video processing tasks.
+
         Returns:
             bool: True if setup is successful, False otherwise.
+
+        Behavior:
+            - Determines the file type using the `determine_file_type` method.
+            - Checks if the 'kunLydCheckBox' is not checked and validates the selected folder path.
+            - For 'dpx' files, calls `check_dpx_files` to verify the presence of required files.
+            - Sets up FFmpeg hardware acceleration and encoding parameters.
+            - Configures the frames per second (fps) based on user selection.
+            - Determines and sets the folder and output file paths.
+            - Creates necessary directories for lossless outputs and logs.
+            - Checks for the existence of specific output files to decide whether to proceed with
+              their creation or reuse existing files.
+
+        Command Construction:
+            - Sets up FFmpeg hardware acceleration with `-hwaccel auto`.
+            - Configures the FFmpeg encoder to use `libx264` with `yuv422p10le` pixel format.
+            - Constructs paths for lossless, ProRes, H.264, and temporary output files based on
+              the selected folder and file names.
+            - Creates 'lossless' and 'logs' directories if they do not already exist.
+            - Checks for the existence of H.264, lossless, and ProRes output files and sets flags
+              (`proceed_h264`, `proceed_lossless`, `proceed_prores`) to determine whether to overwrite
+              existing files or skip the creation.
+
+        Example Usage:
+            To perform the initial setup before video processing:
+                if not self.initial_setup():
+                    # Handle setup failure (e.g., show error message, abort process)
+                    return
+
+        Note:
+            - Ensure that the `determine_file_type`, `check_dpx_files`, and `exist_check` methods are implemented.
+            - The method assumes the presence of several GUI elements (e.g., `kunLydCheckBox`, `mezzaninfilCheckBox`,
+              `inkluderProresCheckBox`, `folder_path`, `mappe_input_field`, `fpsCounter`) and instance attributes
+              (`audio_file_path`, `output_folder_name`, `output_folder`).
+
+        Attributes Set:
+            - self.ffmpeg_hardware_accel: List of FFmpeg hardware acceleration parameters.
+            - self.ffmpeg_encoder: List of FFmpeg encoding parameters.
+            - self.fps: Frames per second setting.
+            - self.folder_name: Name of the selected folder.
+            - self.audio_file: Path to the audio file.
+            - self.lossless_mov: Path to the lossless output MOV file.
+            - self.prores_mov: Path to the ProRes output MOV file.
+            - self.h264_mp4: Path to the H.264 output MP4 file.
+            - self.temp_mov: Path to the temporary MOV file.
+            - self.output_folder_name: Name of the output folder.
+            - self.output_folder: Path to the output folder.
+            - self.proceed_h264: Flag to determine if H.264 output should proceed.
+            - self.proceed_lossless: Flag to determine if lossless output should proceed.
+            - self.proceed_prores: Flag to determine if ProRes output should proceed.
         """
         filetype = self.determine_file_type()
         folder_path = self.folder_path
@@ -532,7 +610,42 @@ class Smelt(QWidget):
 
     def handle_video_operations(self):
         """
-        Handle video processing operations based on file type.
+        Handle video processing operations based on the determined file type.
+
+        This method determines the file type of the video and constructs the appropriate
+        FFmpeg commands to process the video based on the file type and the state of various
+        checkboxes in the GUI. It then executes the constructed commands.
+
+        Behavior:
+            - The method first calls `determine_file_type` to ascertain the type of the video file.
+            - Depending on the file type, it calls appropriate methods from the `ffmpeg_commands` module
+              to construct the required FFmpeg commands.
+            - For 'mxf' and 'mov' file types, it constructs a list of commands based on the states of
+              `mezzaninfilCheckBox` and `inkluderProresCheckBox` checkboxes.
+            - It then calls `execute_ffmpeg_commands` with the constructed list of commands to
+              execute them sequentially.
+
+        Command Construction:
+            - For 'dpx' files, `construct_dpx_commands` is called to set up the necessary commands.
+            - For 'mxf' and 'mov' files, `construct_mxf_mov_commands` is called to set up the necessary commands.
+            - Additional commands are appended based on the checkbox states:
+                - If `mezzaninfilCheckBox` is checked, the 'ffmpeg_dcp_cmd' command is added.
+                - If `inkluderProresCheckBox` is checked, the 'ffmpeg_dcp_prores' command is added.
+            - Specific command lists are defined for different conditions:
+                - For 'mxf' files with certain checkboxes checked, a combination of commands is executed.
+                - For 'mov' files, the 'ffmpeg_h264_from_prores_cmd' command is executed.
+                - Various other combinations of commands are executed based on the states of
+                  the `mezzaninfilCheckBox` and `inkluderProresCheckBox`.
+
+        Example Usage:
+            To process a video file, this method should be called after setting the necessary
+            attributes and checkboxes in the GUI:
+                self.handle_video_operations()
+
+        Note:
+            - Ensure that the `determine_file_type` method accurately identifies the file type.
+            - The `ffmpeg_commands` module should contain the methods for constructing the
+              required FFmpeg commands.
         """
         filetype = self.determine_file_type()
         if filetype == 'dpx':
@@ -612,8 +725,6 @@ class Smelt(QWidget):
               FFmpeg command lists.
             - The method assumes the presence of an `output_folder` attribute, a `step_label`
               for updating the GUI, and an `output_text` list for collecting log messages.
-            - The `run_ffmpeg_command` method should be defined to handle the actual execution
-              of the FFmpeg command.
 
         Args:
             commands (list): A list of command attribute names to execute.
