@@ -66,6 +66,7 @@ class Smelt(QWidget):
         self.selected_files = None
         self.video = None
         self.audio_file_path = None
+        self.output_folder_path = None
         self.folder_path = None
         self.film_file_path = None
         self.ffmpeg_path = None
@@ -76,12 +77,14 @@ class Smelt(QWidget):
         self.filLabel = None
         self.step_label = None
         self.cuda_indicator = None
+        self.output_mappelabel = None
         self.mappeLabel = None
         self.fpsLabel = None
         self.inkluderLydCheckBox = None
         self.inkluderProresCheckBox = None
         self.kunLydCheckBox = None
         self.mezzaninfilCheckBox = None
+        self.outputMappeButton = None
         self.mappeButton = None
         self.filmButton = None
         self.filButton = None
@@ -90,6 +93,7 @@ class Smelt(QWidget):
         self.output_text = None
         self.progress_bar = None
         self.dialog = QFileDialog()
+        self.output_mappe_input_field = None
         self.mappe_input_field = None
         self.fil_input_field = None
 
@@ -123,9 +127,16 @@ class Smelt(QWidget):
         """
         dialog = QFileDialog()
 
+        def select_outputMappe():
+            self.check_box_logic('')
+            folder_path = dialog.getExistingDirectory(None, "Velg output mappe")
+            if folder_path:
+                self.output_folder_path = folder_path
+                self.output_mappe_input_field.setText(folder_path)
+
         def select_mappe():
             self.check_box_logic('')
-            folder_path = dialog.getExistingDirectory(None, "Velg Mappe")
+            folder_path = dialog.getExistingDirectory(None, "Velg input mappe")
             if folder_path:
                 self.folder_path = folder_path
                 self.mappe_input_field.setText(folder_path)
@@ -158,9 +169,11 @@ class Smelt(QWidget):
                         self.fil_input_field.setText(os.path.basename(combined_audio_file))
 
         switch = {
+            'outputMappe': select_outputMappe,
             'mappe': select_mappe,
             'film': select_film,
             'audio': select_audio
+
         }
 
         switch.get(file_type, lambda: None)()
@@ -519,16 +532,24 @@ class Smelt(QWidget):
         self.folder_name = os.path.basename(folder_path)
         self.audio_file = self.audio_file_path or ''
 
-        if self.folder_name == "images" or self.folder_name == "audio":
-            output_folder = os.path.dirname(folder_path)
-            output_folder_name = os.path.basename(output_folder)
+        if self.output_folder_path == '' or self.output_folder_path == None:
+            if self.folder_name == "images" or self.folder_name == "audio":
+                output_folder = os.path.dirname(folder_path)
+                output_folder_name = os.path.basename(output_folder)
+            else:
+                output_folder = folder_path
+                output_folder_name = os.path.basename(output_folder)
         else:
-            output_folder = folder_path
-            output_folder_name = os.path.basename(output_folder)
+            if self.folder_name == "images" or self.folder_name == "audio":
+                output_folder = os.path.dirname(self.output_folder_path)
+                output_folder_name = os.path.basename(folder_path)
+            else:
+                output_folder = self.output_folder_path
+                output_folder_name = os.path.basename(folder_path)
 
         self.lossless_mov = os.path.join(output_folder, 'lossless', '{}.mov'.format(output_folder_name))
         self.prores_mov = os.path.join(output_folder, 'lossless', '{}_prores.mov'.format(output_folder_name))
-        self.h264_mp4 = os.path.join(output_folder, 'lossless', 'nb-no_{}.mp4'.format(output_folder_name))
+        self.h264_mp4 = os.path.join(output_folder, 'lossless', 'no-nb_{}.mp4'.format(output_folder_name))
         self.temp_mov = os.path.join(output_folder, 'lossless', 'temp_{}.mov'.format(output_folder_name))
 
         os.makedirs(os.path.join(output_folder, 'lossless'), exist_ok=True)

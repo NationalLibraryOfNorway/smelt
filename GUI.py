@@ -28,7 +28,8 @@ def create_labels(self):
     Create labels for the UI.
     """
     self.filLabel = QLabel('Lydfil:', self)
-    self.mappeLabel = QLabel('Mappe/fil:', self)
+    self.output_mappelabel = QLabel('Output mappe:', self)
+    self.mappeLabel = QLabel('Input mappe/fil:', self)
     self.fpsLabel = QLabel('FPS:', self)
     self.step_label = QLabel('Processing Step:', self)
     self.step_label.setHidden(True)
@@ -48,11 +49,15 @@ def create_buttons(self):
     """
     Create buttons for the UI.
     """
-    self.mappeButton = QPushButton('Velg Mappe...', self)
+
+    self.outputMappeButton = QPushButton('Velg output mappe', self)
+    # self.mappeButton = QPushButton('Velg Mappe...', self)
+    self.mappeButton = QPushButton('Velg input mappe', self)
     self.filmButton = QPushButton('Velg fil...')
     self.filButton = QPushButton('Velg lydfil...', self)
     self.execButton = QPushButton('Kjør', self)
 
+    self.outputMappeButton.setToolTip('Velg en mappe for output.')
     self.mappeButton.setToolTip('Velg en mappe med .dpx-er, .mxf eller .mov filer.')
     self.filmButton.setToolTip('Velg en .mxf eller en .mov fil.')
     self.filButton.setToolTip('Velg en lydfil.')
@@ -215,6 +220,7 @@ def setup_layout(self):
     """
     Set up the layout of the UI components.
     """
+    self.output_mappe_input_field = QLineEdit(self)
     self.mappe_input_field = QLineEdit(self)
     self.fil_input_field = QLineEdit(self)
 
@@ -225,24 +231,27 @@ def setup_layout(self):
     indicators_layout.setSpacing(0)
 
     layout = QGridLayout()
-    layout.addWidget(self.mappeLabel, 0, 0)
-    layout.addWidget(self.mappe_input_field, 0, 1, 1, 3)
-    layout.addWidget(self.mappeButton, 0, 4)
-    layout.addWidget(self.filmButton, 4, 4)
-    layout.addWidget(self.filLabel, 7, 0)
-    layout.addWidget(self.fil_input_field, 7, 1, 1, 3)
-    layout.addWidget(self.filButton, 7, 4)
-    layout.addWidget(self.inkluderLydCheckBox, 6, 0)
-    layout.addWidget(self.inkluderProresCheckBox, 6, 1)
-    layout.addWidget(self.kunLydCheckBox, 6, 3)
-    layout.addWidget(self.mezzaninfilCheckBox, 6, 2)
-    layout.addWidget(self.fpsLabel, 4, 0)
-    layout.addWidget(self.fpsCounter, 4, 1)
-    layout.addWidget(self.output_text, 12, 0, 1, 5)
-    layout.addWidget(self.progress_bar, 10, 0, 1, 4)
-    layout.addWidget(self.execButton, 10, 4)
-    layout.addWidget(self.step_label, 11, 0, 1, 5)
-    layout.addLayout(indicators_layout, 6, 4)
+    layout.addWidget(self.output_mappelabel, 0,0)
+    layout.addWidget(self.output_mappe_input_field, 0, 1, 1, 3)
+    layout.addWidget(self.outputMappeButton, 0, 4)
+    layout.addWidget(self.mappeLabel, 1, 0)
+    layout.addWidget(self.mappe_input_field, 1, 1, 1, 3)
+    layout.addWidget(self.mappeButton, 1, 4)
+    layout.addWidget(self.filmButton, 5, 4)
+    layout.addWidget(self.filLabel, 8, 0)
+    layout.addWidget(self.fil_input_field, 8, 1, 1, 3)
+    layout.addWidget(self.filButton, 8, 4)
+    layout.addWidget(self.inkluderLydCheckBox, 7, 0)
+    layout.addWidget(self.inkluderProresCheckBox, 7, 1)
+    layout.addWidget(self.kunLydCheckBox, 7, 3)
+    layout.addWidget(self.mezzaninfilCheckBox, 7, 2)
+    layout.addWidget(self.fpsLabel, 5, 0)
+    layout.addWidget(self.fpsCounter, 5, 1)
+    layout.addWidget(self.output_text, 13, 0, 1, 5)
+    layout.addWidget(self.progress_bar, 11, 0, 1, 4)
+    layout.addWidget(self.execButton, 11, 4)
+    layout.addWidget(self.step_label, 12, 0, 1, 5)
+    layout.addLayout(indicators_layout, 7, 4)
 
     self.setLayout(layout)
 
@@ -264,6 +273,7 @@ def designate_button_methods(self):
     self.execButton.clicked.connect(self.run_smelt)
     self.filButton.clicked.connect(lambda: self.select_file_or_folder('audio'))
     self.mappeButton.clicked.connect(lambda: self.select_file_or_folder('mappe'))
+    self.outputMappeButton.clicked.connect(lambda: self.select_file_or_folder('outputMappe'))
     self.filmButton.clicked.connect(lambda: self.select_file_or_folder('film'))
     self.inkluderLydCheckBox.clicked.connect(lambda: self.check_box_logic('lyd'))
     self.kunLydCheckBox.clicked.connect(lambda: self.check_box_logic('kunlyd'))
@@ -321,11 +331,12 @@ def set_styling(self):
     else:
         self.setStyleSheet("background-color: #2B2B2B; color: white;")
 
+    self.output_mappe_input_field.setStyleSheet('border: 1px solid gray;')
     self.fil_input_field.setStyleSheet("border: 1px solid gray;")
     self.mappe_input_field.setStyleSheet('border: 1px solid gray;')
     self.setStyleSheet("background-color: #2B2B2B; color: white;")
     self.setWindowTitle('SMELT')
-    self.resize(550, 200)
+    self.resize(550, 230)
 
 
 def lock_down(self, lock):
@@ -343,11 +354,13 @@ def lock_down(self, lock):
         self.kunLydCheckBox,
         self.mezzaninfilCheckBox,
         self.fpsCounter,
+        self.outputMappeButton,
         self.mappeButton,
         self.fil_input_field,
+        self.output_mappe_input_field,
         self.mappe_input_field,
         self.filButton,
-        self.filmButton
+        self.filmButton,
     ]
     for widget in widgets_to_lock:
         widget.setEnabled(not lock)
