@@ -74,6 +74,7 @@ def create_combobox(self):
         self.fpsCounter.addItem(str(i))
     self.fpsCounter.setCurrentIndex(23)
     self.fpsCounter.view().parentWidget().setMaximumHeight(200)
+    self.fpsCounter.setMinimumWidth(60)
     self.fpsCounter.setMaximumSize(50, 30)
 
 

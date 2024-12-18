@@ -93,11 +93,12 @@ def construct_dpx_commands(self):
         self.ffmpeg_h264_cmd_direct = self.ffmpeg_base + self.ffmpeg_hardware_accel + ffmpeg_dpx + audio_cmd + [
             '-c:v', 'libx264',
             '-pix_fmt', 'yuv420p',
-            '-vf', 'scale=-2:1080',
+            '-vf', 'scale=w=min(1920\,iw):h=min(1080\,ih):force_original_aspect_ratio=decrease,scale=trunc(iw/2)*2:trunc(ih/2)*2',
             '-preset', 'slow',
             '-crf', '23',
             '-c:a', 'aac',
             '-b:a', '224k',
+            '-ac', '2', # Force steroe (2 channels)
             '-map', '0:v:0',
             '-map', '1:a:0',
             self.h264_mp4,
@@ -107,7 +108,7 @@ def construct_dpx_commands(self):
         self.ffmpeg_h264_cmd_direct = self.ffmpeg_base + self.ffmpeg_hardware_accel + ffmpeg_dpx + [
             '-c:v', 'libx264',
             '-pix_fmt', 'yuv420p',
-            '-vf', 'scale=-2:1080',
+            '-vf', 'scale=w=min(1920\,iw):h=min(1080\,ih):force_original_aspect_ratio=decrease,scale=trunc(iw/2)*2:trunc(ih/2)*2',
             '-preset', 'slow',
             '-crf', '23',
             '-map', '0:v:0',
@@ -140,12 +141,13 @@ def construct_dpx_commands(self):
     self.ffmpeg_h264_cmd = self.ffmpeg_base + self.ffmpeg_hardware_accel + [
         '-i', self.lossless_mov,
     ] + self.ffmpeg_encoder + [
-                               '-vf', 'scale=-2:1080',
+                               '-vf', 'scale=w=min(1920\,iw):h=min(1080\,ih):force_original_aspect_ratio=decrease,scale=trunc(iw/2)*2:trunc(ih/2)*2',
                                '-pix_fmt', 'yuv420p',
                                '-preset', 'slow',
                                '-crf', '23',
                                '-c:a', 'aac',
                                '-b:a', '224k',
+                               '-ac', '2',  # Force stereo (2 channels)
                                self.h264_mp4,
                                self.proceed_h264
                            ]
@@ -221,6 +223,7 @@ def construct_mxf_mov_commands(self):
         '-pix_fmt', 'yuv420p',
         '-preset', 'slow',
         '-crf', '21',
+        '-vf', 'scale=w=min(1920\,iw):h=min(1080\,ih):force_original_aspect_ratio=decrease,scale=trunc(iw/2)*2:trunc(ih/2)*2',
         '-ac', '2',
     ] + ffmpeg_audio_param + [
                                    '-v', 'info',
@@ -229,10 +232,13 @@ def construct_mxf_mov_commands(self):
                                ]
     self.ffmpeg_h264_from_prores_cmd = ffmpeg_base + self.ffmpeg_hardware_accel + ffmpeg_video_audio + [
         '-c:v', 'libx264',
-        '-vf', 'scale=-2:1080',
+        '-vf', 'scale=w=min(1920\,iw):h=min(1080\,ih):force_original_aspect_ratio=decrease,scale=trunc(iw/2)*2:trunc(ih/2)*2',
         '-pix_fmt', 'yuv420p',
         '-preset', 'slow',
         '-crf', '23',
+        '-c:a', 'aac',  # Add audio codec
+        '-ac', '2',     # Force stereo
+        '-b:a', '224k', # Set audio bitrate
         '-v', 'info',
         self.h264_mp4,
         self.proceed_h264
