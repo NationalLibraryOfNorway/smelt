@@ -1,5 +1,8 @@
 name: Build with PyInstaller and Create Release
 
+permissions:
+  contents: write
+
 on:
   pull_request:
     branches:
@@ -9,188 +12,188 @@ on:
 jobs:
   build:
     runs-on: ${{ matrix.os }}
-    
+
     strategy:
       matrix:
         os: [windows-latest, ubuntu-latest]
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v2
+      - name: Checkout repository
+        uses: actions/checkout@v2
 
-    - name: Set up Python
-      uses: actions/setup-python@v2
-      with:
-        python-version: '3.12.3' # specify the Python version you need
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.12.3" # specify the Python version you need
 
-    - name: Install dependencies (Windows)
-      if: matrix.os == 'windows-latest'
-      run: |
-        python -m pip install --upgrade pip
-        pip install pyinstaller
-        pip install PyQt5
-        pip install pywin32
+      - name: Install dependencies (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyinstaller
+          pip install PyQt5
+          pip install pywin32
 
-    - name: Install dependencies (Linux)
-      if: matrix.os == 'ubuntu-latest'
-      run: |
-        python -m pip install --upgrade pip
-        pip install pyinstaller
-        pip install PyQt5
+      - name: Install dependencies (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyinstaller
+          pip install PyQt5
 
-    - name: Install missing libraries (Linux)
-      if: matrix.os == 'ubuntu-latest'
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y \
-          build-essential \
-          libxcb-shape0-dev \
-          libxcb-xinerama0 \
-          libxcb-xkb1 \
-          libxcb-image0 \
-          libxcb-keysyms1 \
-          libxcb-icccm4 \
-          libxcb-render-util0 \
-          libxkbcommon-x11-0 \
-          gcc-10 \
-          g++-10 \
-          libstdc++6
-        sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-10 10
-        sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-10 10
-        sudo update-alternatives --set gcc /usr/bin/gcc-10
-        sudo update-alternatives --set g++ /usr/bin/g++-10
-      
-    - name: Extract FFmpeg (Windows)
-      if: matrix.os == 'windows-latest'
-      run: |
-        powershell -command "Expand-Archive -Path 'resources/ffmpeg.zip' -DestinationPath 'resources/'"
-      
-    - name: List contents of resources directory after extraction (Windows)
-      if: matrix.os == 'windows-latest'
-      run: |
-        Get-ChildItem -Path resources -Recurse
-         
-    - name: Generate resources_rc.py (Windows)
-      if: matrix.os == 'windows-latest'
-      run: |
-        pyrcc5 resources/resources.qrc -o resources/resources_rc.py
-        
-    - name: Generate resources_rc.py (Linux)
-      if: matrix.os == 'ubuntu-latest'
-      run: |
-        pyrcc5 resources/resources.qrc -o resources/resources_rc.py
+      - name: Install missing libraries (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            libxcb-shape0-dev \
+            libxcb-xinerama0 \
+            libxcb-xkb1 \
+            libxcb-image0 \
+            libxcb-keysyms1 \
+            libxcb-icccm4 \
+            libxcb-render-util0 \
+            libxkbcommon-x11-0 \
+            gcc-10 \
+            g++-10 \
+            libstdc++6
+          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-10 10
+          sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-10 10
+          sudo update-alternatives --set gcc /usr/bin/gcc-10
+          sudo update-alternatives --set g++ /usr/bin/g++-10
 
-    - name: Build with PyInstaller (Windows)
-      if: matrix.os == 'windows-latest'
-      run: |
-        pyinstaller resources/Smelt.spec  # Use the spec file
-        Get-ChildItem -Path dist -Recurse  # List contents of dist directory for debugging
-        Get-ChildItem -Path build -Recurse  # List contents of build directory for debugging
+      - name: Extract FFmpeg (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          powershell -command "Expand-Archive -Path 'resources/ffmpeg.zip' -DestinationPath 'resources/'"
 
-    - name: Build with PyInstaller (Linux)
-      if: matrix.os == 'ubuntu-latest'
-      run: |
-        pyinstaller resources/Smelt.spec  # Use the spec file
-        ls -al dist  # List contents of dist directory for debugging
+      - name: List contents of resources directory after extraction (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          Get-ChildItem -Path resources -Recurse
 
-    - name: Set executable permission and create tarball for Linux artifact
-      if: matrix.os == 'ubuntu-latest'
-      run: |
-        chmod +x dist/Smelt
-        tar -czvf smelt-executable-linux.tar.gz -C dist Smelt
+      - name: Generate resources_rc.py (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          pyrcc5 resources/resources.qrc -o resources/resources_rc.py
 
-    - name: Upload artifact (Windows)
-      if: matrix.os == 'windows-latest'
-      uses: actions/upload-artifact@v3
-      with:
-        name: smelt-executable-windows
-        path: dist/Smelt.exe  # Adjusted path based on build output
+      - name: Generate resources_rc.py (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          pyrcc5 resources/resources.qrc -o resources/resources_rc.py
 
-    - name: Upload artifact (Linux)
-      if: matrix.os == 'ubuntu-latest'
-      uses: actions/upload-artifact@v3
-      with:
-        name: smelt-executable-linux
-        path: smelt-executable-linux.tar.gz
+      - name: Build with PyInstaller (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          pyinstaller resources/Smelt.spec  # Use the spec file
+          Get-ChildItem -Path dist -Recurse  # List contents of dist directory for debugging
+          Get-ChildItem -Path build -Recurse  # List contents of build directory for debugging
+
+      - name: Build with PyInstaller (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          pyinstaller resources/Smelt.spec  # Use the spec file
+          ls -al dist  # List contents of dist directory for debugging
+
+      - name: Set executable permission and create tarball for Linux artifact
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          chmod +x dist/Smelt
+          tar -czvf smelt-executable-linux.tar.gz -C dist Smelt
+
+      - name: Upload artifact (Windows)
+        if: matrix.os == 'windows-latest'
+        uses: actions/upload-artifact@v3
+        with:
+          name: smelt-executable-windows
+          path: dist/Smelt.exe # Adjusted path based on build output
+
+      - name: Upload artifact (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        uses: actions/upload-artifact@v3
+        with:
+          name: smelt-executable-linux
+          path: smelt-executable-linux.tar.gz
 
   release:
     needs: build
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v2
+      - name: Checkout repository
+        uses: actions/checkout@v2
 
-    - name: Download artifact (Windows)
-      uses: actions/download-artifact@v3
-      with:
-        name: smelt-executable-windows
-        path: ./dist/windows
+      - name: Download artifact (Windows)
+        uses: actions/download-artifact@v3
+        with:
+          name: smelt-executable-windows
+          path: ./dist/windows
 
-    - name: Download artifact (Linux)
-      uses: actions/download-artifact@v3
-      with:
-        name: smelt-executable-linux
-        path: ./dist/linux
+      - name: Download artifact (Linux)
+        uses: actions/download-artifact@v3
+        with:
+          name: smelt-executable-linux
+          path: ./dist/linux
 
-    - name: Check if artifact exists (Linux)
-      run: |
-        if [ -f "./dist/linux/smelt-executable-linux.tar.gz" ]; then
-          echo "Linux artifact found."
-        else
-          echo "Linux artifact not found."
-          exit 1
-        fi
+      - name: Check if artifact exists (Linux)
+        run: |
+          if [ -f "./dist/linux/smelt-executable-linux.tar.gz" ]; then
+            echo "Linux artifact found."
+          else
+            echo "Linux artifact not found."
+            exit 1
+          fi
 
-    - name: Get latest release version
-      id: get_latest_release
-      run: |
-        LATEST_VERSION=$(curl -s https://api.github.com/repos/${{ github.repository }}/releases/latest | jq -r .tag_name)
-        if [[ $LATEST_VERSION == null ]]; then
-          LATEST_VERSION="v0.0.0"
-        fi
-        echo "LATEST_VERSION=$LATEST_VERSION" >> $GITHUB_ENV
+      - name: Get latest release version
+        id: get_latest_release
+        run: |
+          LATEST_VERSION=$(curl -s https://api.github.com/repos/${{ github.repository }}/releases/latest | jq -r .tag_name)
+          if [[ $LATEST_VERSION == null ]]; then
+            LATEST_VERSION="v0.0.0"
+          fi
+          echo "LATEST_VERSION=$LATEST_VERSION" >> $GITHUB_ENV
 
-    - name: Set new version
-      id: set_version
-      run: |
-        LATEST_VERSION=${{ env.LATEST_VERSION }}
-        VERSION_PARTS=(${LATEST_VERSION//./ })
-        MAJOR=${VERSION_PARTS[0]}
-        MINOR=${VERSION_PARTS[1]}
-        PATCH=${VERSION_PARTS[2]}
-        NEW_PATCH=$((PATCH + 1))
-        NEW_VERSION="v0.$MINOR.$NEW_PATCH"
-        echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_ENV
+      - name: Set new version
+        id: set_version
+        run: |
+          LATEST_VERSION=${{ env.LATEST_VERSION }}
+          VERSION_PARTS=(${LATEST_VERSION//./ })
+          MAJOR=${VERSION_PARTS[0]}
+          MINOR=${VERSION_PARTS[1]}
+          PATCH=${VERSION_PARTS[2]}
+          NEW_PATCH=$((PATCH + 1))
+          NEW_VERSION="v0.$MINOR.$NEW_PATCH"
+          echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_ENV
 
-    - name: Create Release
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: ${{ env.NEW_VERSION }}
-        release_name: ${{ env.NEW_VERSION }}-Beta Release
-        body: |
-          Automatic release from GitHub Actions.
-        draft: true
-        prerelease: false
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ env.NEW_VERSION }}
+          release_name: ${{ env.NEW_VERSION }}-Beta Release
+          body: |
+            Automatic release from GitHub Actions.
+          draft: true
+          prerelease: false
 
-    - name: Upload Release Asset (Windows)
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./dist/windows/Smelt.exe
-        asset_name: Smelt.exe
-        asset_content_type: application/octet-stream
+      - name: Upload Release Asset (Windows)
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./dist/windows/Smelt.exe
+          asset_name: Smelt.exe
+          asset_content_type: application/octet-stream
 
-    - name: Upload Release Asset (Linux)
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./dist/linux/smelt-executable-linux.tar.gz
-        asset_name: smelt-executable-linux.tar.gz
-        asset_content_type: application/octet-stream
+      - name: Upload Release Asset (Linux)
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./dist/linux/smelt-executable-linux.tar.gz
+          asset_name: smelt-executable-linux.tar.gz
+          asset_content_type: application/octet-stream
